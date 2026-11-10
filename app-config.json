@@ -1,0 +1,13 @@
+{
+  "v": 1,
+  "clientId": "",
+  "appName": "",
+  "theme": {
+    "preset": "murugan",
+    "pri": "#8c2410",
+    "pri2": "#b4361b",
+    "acc": "#e8a317",
+    "bg": "#fbf6ee",
+    "icon": "vel"
+  }
+}
