@@ -2,9 +2,9 @@
    - lets the app open without internet (app shell only; your data is in your database file / OneDrive)
    - caches the on-device OCR engine after first use
    - receives photos shared from the Gallery / Camera ("Share > Temple") and hands them to the app
-   Bump V when you replace index.html so phones pick up the new version. */
-var V = 'tmgr-v4', OCR = V + '-ocr', SH = 'tmgr-share';
-var SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+   Raise V when you replace index.html so phones pick up the new version. */
+var V = 'tmgr-v8', OCR = V + '-ocr', SH = 'tmgr-share';
+var SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(V).then(function (c) {
     return Promise.all(SHELL.map(function (u) { return c.add(u).catch(function () {}); }));
@@ -37,6 +37,7 @@ self.addEventListener('fetch', function (e) {
   var r = e.request, u = new URL(r.url);
   if (r.method === 'POST' && u.origin === location.origin && /\/share-target$/.test(u.pathname)) { e.respondWith(shareTarget(r)); return; }
   if (r.method !== 'GET') return;
+  if (u.origin === location.origin && /\/app-config\.json$/.test(u.pathname)) { e.respondWith(fetch(r).catch(function () { return caches.match(r); })); return; }
   if (u.origin === location.origin) {
     e.respondWith(caches.open(V).then(function (c) {
       return c.match(r, { ignoreSearch: true }).then(function (hit) {
