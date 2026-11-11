@@ -1,13 +1,17 @@
 {
   "v": 1,
   "clientId": "",
-  "appName": "",
+  "appName": "Vetrivel Kotta",
   "theme": {
-    "preset": "murugan",
-    "pri": "#8c2410",
-    "pri2": "#b4361b",
-    "acc": "#e8a317",
-    "bg": "#fbf6ee",
+    "preset": "green",
+    "pri": "#1b5e3b",
+    "pri2": "#2e7d52",
+    "acc": "#d4a017",
+    "bg": "#f3f8f1",
     "icon": "vel"
-  }
+  },
+  "lock": 1,
+  "sh": "o+OYIt0NJ+/sA/+/Pdn6EdfH1JiDOBD5JfhdwWfV8xE=",
+  "ss": "xNB8mOYUoM6XEGVNUVF8GQ==",
+  "n": "Arulmigu Sri Valli Devasena Sametha Prasanna Subramanya Swamy Thirukoil, Vetrivel Kottam, Thiruninravur"
 }
