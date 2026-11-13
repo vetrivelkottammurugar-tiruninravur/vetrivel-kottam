@@ -1,0 +1,54 @@
+{
+ "v": "10.0.0",
+ "html": "10.0",
+ "patches": [
+  {
+   "f": "patches/p10-core.js",
+   "v": "ff3578cba5"
+  },
+  {
+   "f": "patches/p15-panchang.js",
+   "v": "2b5027f71c"
+  },
+  {
+   "f": "patches/p16-translit.js",
+   "v": "04a879f689"
+  },
+  {
+   "f": "patches/p20-access.js",
+   "v": "918144b436"
+  },
+  {
+   "f": "patches/p30-banner.js",
+   "v": "05d17d736c"
+  },
+  {
+   "f": "patches/p40-send.js",
+   "v": "c3af5daca6"
+  },
+  {
+   "f": "patches/p50-daily.js",
+   "v": "f78f73d0d2"
+  },
+  {
+   "f": "patches/p60-names.js",
+   "v": "9d833f8abf"
+  },
+  {
+   "f": "patches/p70-voice.js",
+   "v": "61760318fb"
+  },
+  {
+   "f": "patches/p75-shorts.js",
+   "v": "4bdf994bd1"
+  },
+  {
+   "f": "patches/p80-bot.js",
+   "v": "f43b5ab48a"
+  }
+ ],
+ "disabled": [],
+ "note": "Banner QR fixed · one-tap batch sending · panchangam · AI voice & music · Shorts maker · reply bot · automatic updates",
+ "noteTa": "பேனர் QR சரிசெய்தல் · ஒரு-தொடுதல் தொகுப்பு அனுப்புதல் · பஞ்சாங்கம் · AI குரல் & இசை · சிறு வீடியோ · பதில் தானி · தானியங்கி புதுப்பிப்பு",
+ "t": 1794598229
+}

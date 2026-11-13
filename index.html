@@ -4831,5 +4831,22 @@ hook('Status page',['VIEWS','TITLES','MORE','S','db'],()=>{
 
 
 </script>
+<script id="px-loader">/*px10-loader*/
+(function(){
+ var P=window.PXL={v:'10',html:'10.0',loaded:[],failed:[],err:'',man:null,t0:Date.now()};
+ function ld(src,cb){var s=document.createElement('script');s.src=src;s.async=false;s.onload=function(){cb(null);};s.onerror=function(){cb(new Error('load '+src));};document.body.appendChild(s);}
+ function getMan(){return fetch('patches.json?_='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('patches.json '+r.status);return r.json();}).catch(function(e){try{var c=JSON.parse(localStorage.getItem('px_man')||'null');if(c){P.err='offline copy';return c;}}catch(x){}throw e;});}
+ P.fetchMan=getMan;
+ getMan().then(function(m){
+  if(!m||!m.patches){P.err='patches.json is empty';return;}
+  P.man=m;try{localStorage.setItem('px_man',JSON.stringify(m));}catch(e){}
+  var dis=m.disabled||[],list=m.patches.filter(function(p){return dis.indexOf(p.f)<0;}),i=0;
+  (function next(){
+   if(i>=list.length){P.done=true;try{if(typeof render==='function')render();}catch(e){P.err='render: '+e.message;}document.dispatchEvent(new Event('px-ready'));return;}
+   var p=list[i++];ld(p.f+'?v='+encodeURIComponent(p.v||m.v||''),function(e){if(e)P.failed.push(p.f);else P.loaded.push(p.f);next();});
+  })();
+ }).catch(function(e){P.err=String(e&&e.message||e);P.done=true;document.dispatchEvent(new Event('px-ready'));});
+})();
+</script>
 </body>
 </html>

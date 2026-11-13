@@ -1,120 +1,28 @@
 {
   "id": "./index.html",
-  "name": "Vetrivel Kotta",
-  "short_name": "Vetrivel Kotta",
-  "description": "Devotees, donations, pooja bookings and WhatsApp / SMS messages for Arulmigu Sri Valli Devasena Sametha Prasanna Subramanya Swamy Thirukoil, Vetrivel Kottam, Thiruninravur",
+  "name": "Vetrivel Kottam",
+  "short_name": "Vetrivel Kottam",
+  "description": "Vetrivel Kottam temple app: devotees, donations, pooja bookings, WhatsApp messages, gallery and live telecast - Arulmigu Sri Valli Devasena Sametha Prasanna Subramanya Swamy Thirukoil, Thiruninravur",
   "lang": "en",
   "dir": "ltr",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "display_override": [
-    "standalone",
-    "minimal-ui"
-  ],
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
-  "background_color": "#f3f8f1",
-  "theme_color": "#1b5e3b",
-  "categories": [
-    "productivity",
-    "business"
-  ],
+  "background_color": "#fbf6ee",
+  "theme_color": "#8c2410",
+  "categories": ["productivity", "lifestyle"],
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-maskable-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
   ],
   "shortcuts": [
-    {
-      "name": "Scan notebook",
-      "short_name": "Scan",
-      "url": "./index.html?go=scan",
-      "icons": [
-        {
-          "src": "icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Add donation",
-      "short_name": "Donation",
-      "url": "./index.html?go=donation",
-      "icons": [
-        {
-          "src": "icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Broadcast message",
-      "short_name": "Broadcast",
-      "url": "./index.html?go=broadcast",
-      "icons": [
-        {
-          "src": "icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Today's reminders",
-      "short_name": "Reminders",
-      "url": "./index.html?go=alerts",
-      "icons": [
-        {
-          "src": "icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    }
+    {"name": "Create & share", "short_name": "Create", "url": "./index.html?go=social", "icons": [{"src": "icon-192.png", "sizes": "192x192", "type": "image/png"}]},
+    {"name": "Broadcast", "short_name": "Broadcast", "url": "./index.html?go=broadcast", "icons": [{"src": "icon-192.png", "sizes": "192x192", "type": "image/png"}]},
+    {"name": "Add donation", "short_name": "Donation", "url": "./index.html?go=donation", "icons": [{"src": "icon-192.png", "sizes": "192x192", "type": "image/png"}]},
+    {"name": "Today's reminders", "short_name": "Reminders", "url": "./index.html?go=alerts", "icons": [{"src": "icon-192.png", "sizes": "192x192", "type": "image/png"}]}
   ],
-  "share_target": {
-    "action": "./share-target",
-    "method": "POST",
-    "enctype": "multipart/form-data",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url",
-      "files": [
-        {
-          "name": "media",
-          "accept": [
-            "image/*",
-            ".jpg",
-            ".jpeg",
-            ".png"
-          ]
-        }
-      ]
-    }
-  },
-  "launch_handler": {
-    "client_mode": [
-      "navigate-existing",
-      "auto"
-    ]
-  },
-  "prefer_related_applications": false
+  "share_target": {"action": "./share-target", "method": "POST", "enctype": "multipart/form-data", "params": {"title": "title", "text": "text", "url": "url", "files": [{"name": "media", "accept": ["image/*", "video/*", ".jpg", ".jpeg", ".png", ".mp4"]}]}}
 }
