@@ -1,7 +1,7 @@
 {
   "id": "./index.html",
-  "name": "Murugar Temple Manager",
-  "short_name": "Temple",
+  "name": "Vetrivel Kotta",
+  "short_name": "Vetrivel Kotta",
   "description": "Devotees, donations, pooja bookings and WhatsApp / SMS messages for Arulmigu Sri Valli Devasena Sametha Prasanna Subramanya Swamy Thirukoil, Vetrivel Kottam, Thiruninravur",
   "lang": "en",
   "dir": "ltr",
@@ -13,8 +13,8 @@
     "minimal-ui"
   ],
   "orientation": "portrait",
-  "background_color": "#fbf6ee",
-  "theme_color": "#8c2410",
+  "background_color": "#f3f8f1",
+  "theme_color": "#1b5e3b",
   "categories": [
     "productivity",
     "business"
