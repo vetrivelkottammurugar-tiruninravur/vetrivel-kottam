@@ -3337,7 +3337,7 @@ const _th9=VIEWS.theme;VIEWS.theme=()=>{let h=_th9();if(!h||!isAdmin())return h;
  const card=`<div class="card"><h3>${esc(L('How it looks on the phone'))}</h3><div style="background:linear-gradient(160deg,#37474f,#1c313a);border-radius:18px;padding:18px;display:flex;gap:22px;justify-content:center"><div style="text-align:center;color:#fff;font-size:12px;width:72px"><div style="width:56px;height:56px;margin:0 auto 6px;border-radius:22%;overflow:hidden;background:linear-gradient(${d.pri},${d.pri2||d.pri});display:flex;align-items:center;justify-content:center">${ic}</div>${esc(nm)}</div><div style="text-align:center;color:#fff;opacity:.5;font-size:12px;width:72px"><div style="width:56px;height:56px;margin:0 auto 6px;border-radius:22%;background:#607d8b"></div>Phone</div><div style="text-align:center;color:#fff;opacity:.5;font-size:12px;width:72px"><div style="width:56px;height:56px;margin:0 auto 6px;border-radius:22%;background:#78909c"></div>Camera</div></div></div>`;
  return h.replace('<div class="card"><h3>📱',card+'<div class="card"><h3>📱');};
 /* manifest: reopen the running app; bump the cache version so phones pick up this release */
-(function(){try{const m=JSON.parse(PWA_FILES['manifest.json']);m.launch_handler={client_mode:['navigate-existing','auto']};m.prefer_related_applications=false;PWA_FILES['manifest.json']=J(m,null,2);PWA_FILES['sw.js']=PWA_FILES['sw.js'].replace(/tmgr-v\d+/,'tmgr-v9');}catch(e){}})();
+(function(){try{const m=JSON.parse(PWA_FILES['manifest.json']);m.launch_handler={client_mode:['navigate-existing','auto']};m.prefer_related_applications=false;PWA_FILES['manifest.json']=J(m,null,2);PWA_FILES['sw.js']=PWA_FILES['sw.js'].replace(/tmgr-v\d+/,'tmgr-v91');}catch(e){}})();
 /* ---------- search everything ---------- */
 IC.find=IC.search;
 A.gsearch=()=>{modal(L('Search'),`<div class="search" style="margin-bottom:8px">${ico('search')}<input id="gsq" type="search" placeholder="${esc(L('Name, mobile, receipt, function…'))}" autocomplete="off" enterkeyhint="search"></div><div id="gsr" class="mut">${esc(L('Type at least 2 letters.'))}</div>`,null,{noSave:true});setTimeout(()=>{const i=$('#gsq');if(i)i.focus();},120);};
@@ -4283,6 +4283,553 @@ boot();
 
 window.addEventListener('beforeunload',e=>{if(S.dirty&&S.status!=='local'){e.preventDefault();e.returnValue='';}});
 render();
+</script>
+<script>/*px91*/
+/* =====================================================================
+   v9.1 ADD-ON  —  runs on top of the v9 app (does not replace it)
+   Sections: core · sharing · daily-thought picture · banner layout · gallery storage ·
+             auto Tamil · voice dictation · Create & share studio · live & videos · status
+   ===================================================================== */
+(function(){
+'use strict';
+if(window.PX&&window.PX.v)return;
+const PX=window.PX={v:'9.1',hooks:[],errs:[],caps:{}};
+const have=(...n)=>n.every(x=>{try{return (0,eval)('typeof '+x)!=='undefined';}catch(e){return false;}});
+const setG=(n,f)=>{window.__pxt=f;try{(0,eval)(n+'=window.__pxt');return true;}catch(e){PX.errs.push('set '+n+': '+e.message);return false;}finally{try{delete window.__pxt;}catch(e){}}};
+const hook=(name,req,fn)=>{const h={name,ok:false,msg:''};PX.hooks.push(h);const miss=req.filter(r=>!have(r));if(miss.length){h.msg='missing: '+miss.join(', ');return false;}try{fn();h.ok=true;return true;}catch(e){h.msg=e.message;PX.errs.push(name+': '+(e.stack||e.message));return false;}};
+const tx=s=>{try{return L(s);}catch(e){return s;}};
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $q=(s,r)=>(r||document).querySelector(s);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const fmtSize=b=>b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
+const fmtDur=s=>{s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
+const addDict=rows=>{try{rows.forEach(r=>{DICT[r[0]]=r.slice(1);});}catch(e){}};
+const isVid=f=>!!f&&/^video\//.test(f.type||'');
+function dlFile(f){const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name||'file';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},900);}
+async function copyTxt(t){try{await navigator.clipboard.writeText(t);return true;}catch(e){try{const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();return ok;}catch(x){return false;}}}
+PX.fmtSize=fmtSize;PX.fmtDur=fmtDur;PX.copy=copyTxt;
+/* what this phone / browser can do (shown in More → v9.1 status) */
+try{PX.caps={share:!!navigator.share,shareFiles:!!(navigator.canShare&&navigator.canShare({files:[new File(['x'],'a.jpg',{type:'image/jpeg'})]})),shareVideo:!!(navigator.canShare&&navigator.canShare({files:[new File(['x'],'a.mp4',{type:'video/mp4'})]})),recorder:!!window.MediaRecorder,camera:!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia),speech:!!(window.SpeechRecognition||window.webkitSpeechRecognition),translator:'Translator' in window,mp4rec:!!(window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported('video/mp4'))};}catch(e){}
+/* ---------- styles ---------- */
+const st=document.createElement('style');st.id='px-css';st.textContent=`
+.pxsheet{position:fixed;inset:0;z-index:260}.pxsheet .scrim{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+.pxsheet .box{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;padding:14px 16px calc(14px + var(--sab));max-height:92vh;overflow:auto}
+@media(min-width:700px){.pxsheet .box{left:50%;right:auto;transform:translateX(-50%);width:560px;max-width:96vw;bottom:4vh;border-radius:18px}}
+.pxta{display:flex;align-items:center;gap:8px;margin:4px 0 8px;flex-wrap:wrap}.pxta .pxst{flex:1;min-width:0}
+.pxmic{width:40px;height:40px;border:0;border-radius:50%;background:var(--soft);color:var(--pri);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none;font-size:18px}
+.pxrow{display:flex;gap:8px;align-items:flex-start}.pxrow>div{flex:1;min-width:0}
+.pxfull{position:fixed;inset:0;z-index:270;background:#000;color:#fff;display:flex;flex-direction:column}
+.pxfull video{flex:1;min-height:0;width:100%;object-fit:contain;background:#000}
+.pxfull .top{display:flex;align-items:center;gap:8px;padding:calc(8px + var(--sat)) 10px 8px;justify-content:space-between}
+.pxfull .bot{display:flex;align-items:center;justify-content:center;gap:22px;padding:14px 10px calc(18px + var(--sab));flex-wrap:wrap}
+.pxrb{width:76px;height:76px;border-radius:50%;border:5px solid #fff;background:#e53935;cursor:pointer;padding:0}.pxrb.on{border-radius:18px;width:66px;height:66px}
+.pxcb{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:22px;padding:8px 14px;min-height:44px;cursor:pointer}.pxcb.on{background:#fff;color:#000}
+.pxtime{font:700 18px ui-monospace,Menlo,monospace}.pxrec-dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:#e53935;margin-right:6px;animation:pulse 1s infinite}
+.pxprev{display:block;width:100%;max-height:46vh;object-fit:contain;border-radius:12px;background:#111}
+.pxchips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.pxchips .tag{padding:3px 10px}
+.pxtile{border:0;background:var(--soft);border-radius:14px;padding:14px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:calc(13px*var(--fs));text-align:center;cursor:pointer;color:var(--tx);line-height:1.2;min-height:82px}.pxtile .ic{color:var(--pri)}.pxtile[disabled]{opacity:.45}
+.pxtiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pxcd{font:700 22px ui-monospace,Menlo,monospace}.gloc{position:absolute;left:5px;top:5px;background:rgba(0,0,0,.55);color:#fff;border-radius:9px;padding:0 6px;font-size:12px}
+.pxbar{height:8px;border-radius:4px;background:var(--bd);overflow:hidden;margin:8px 0}.pxbar i{display:block;height:100%;background:var(--pri);width:0;transition:width .3s}
+body.big .pxtiles{grid-template-columns:repeat(2,1fr)}
+`;document.head.appendChild(st);
+/* ---------- fresh-tap share sheet (fixes "share as picture failed") ---------- */
+hook('Sharing: fresh-tap sheet',['modal','closeModal','toast','shareImg'],()=>{
+ PX.sh=null;
+ PX.share=async function(o){
+  const files=(o.files||[]).filter(Boolean),data={};if(files.length)data.files=files;if(o.text)data.text=o.text;if(o.title)data.title=o.title;if(o.url)data.url=o.url;
+  const can=!!navigator.share&&(!files.length||!!(navigator.canShare&&navigator.canShare({files})));
+  if(can){try{await navigator.share(data);return 'shared';}catch(e){if(e&&e.name==='AbortError')return 'abort';PX.lastShareErr=(e&&e.name)+': '+(e&&e.message);}}
+  PX.openShareSheet(o,can?'Your phone wants one fresh tap before it opens the share screen. Tap “Share now”.':'This browser cannot share this file straight to other apps. Save it, then attach it in WhatsApp / YouTube / Instagram.');
+  return 'sheet';};
+ function body(why,err){const o=PX.sh.o,f=(o.files||[])[0],url=PX.sh.url;
+  const prev=f?(isVid(f)?`<video class="pxprev" src="${url}" controls playsinline></video>`:`<img class="pxprev" src="${url}" alt="">`):'';
+  return `${why?`<div class="warn">${E(tx(why))}</div>`:''}${err?`<div class="warn" style="color:var(--bad)">${E(err)}</div>`:''}${prev}
+  <textarea id="pxShTxt" style="min-height:72px;margin-top:8px">${E(o.text||'')}</textarea>
+  <div class="menu"><button type="button" class="mi" data-act="pxShNow">${ico('share')}<span>${E(tx('Share now'))}</span></button>${f?`<button type="button" class="mi" data-act="pxShSave">${ico('down')}<span>${E(tx('Save to phone'))}</span></button>`:''}<button type="button" class="mi" data-act="pxShCopy">${ico('edit')}<span>${E(tx('Copy text'))}</span></button>${o.text&&have('waLink')?`<a class="mi" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(o.text)}">${ico('sms')}<span>${E(tx('Open WhatsApp with the text'))}</span></a>`:''}</div>`;}
+ PX.openShareSheet=function(o,why){try{if(PX.sh&&PX.sh.url)URL.revokeObjectURL(PX.sh.url);}catch(e){}const f=(o.files||[])[0];PX.sh={o,url:f?URL.createObjectURL(f):''};
+  modal(tx(o.title||'Share'),body(why),null,{bottom:true,noSave:true});};
+ A.pxShNow=async()=>{const s=PX.sh;if(!s)return;const t=($q('#pxShTxt')||{}).value||'',files=(s.o.files||[]).filter(Boolean),data={};if(files.length)data.files=files;if(t)data.text=t;if(s.o.title)data.title=s.o.title;
+  try{if(!navigator.share)throw new Error('Sharing is not available in this browser');await navigator.share(data);closeModal();toast(tx('Shared'));}
+  catch(e){if(e&&e.name==='AbortError')return;const mb=$q('#modal .mbody');if(mb)mb.innerHTML=body('',((e&&e.name)||'Error')+': '+((e&&e.message)||''));}};
+ A.pxShSave=()=>{const f=((PX.sh||{}).o||{}).files;if(f&&f[0]){dlFile(f[0]);toast(tx('Saved to your phone'));}};
+ A.pxShCopy=async()=>{toast((await copyTxt(($q('#pxShTxt')||{}).value||''))?tx('Copied'):tx('Could not copy'));};
+ setG('shareImg',async function(file,text,title){return PX.share({files:[file],text,title});});
+ addDict([['Share now','இப்போது பகிர்'],['Save to phone','போனில் சேமி'],['Copy text','உரையை நகலெடு'],['Open WhatsApp with the text','உரையுடன் WhatsApp திற'],['Shared','பகிரப்பட்டது'],['Saved to your phone','போனில் சேமிக்கப்பட்டது'],['Copied','நகலெடுக்கப்பட்டது'],['Could not copy','நகலெடுக்க முடியவில்லை']]);});
+/* ---------- picture flow: render first, then a fresh tap shares it ---------- */
+hook('Picture flow (daily thought)',['A','modal','closeModal','toast','bannerFile','bnNew','devMsg','thoughtFor','CL_L','iso','db'],()=>{
+ PX.pf=null;PX.dt={th:0,size:'sq',lang:'ta'};
+ const THN=['Temple','Saffron','Green','Blue','Cream','Night'];
+ function thoughtDesign(){const o=PX.dt,ds=iso(new Date()),lc0=o.lang==='en'?'en':'ta',des={...bnNew('blank',lc0),name:'thought',size:o.size,th:o.th,tsz:.78,sub:'',lines:'',logo:true,temple:true,frame:true,qr:'',tl:(lc0==='ta'&&db.settings.templeNameTa)?'ta':'en'};
+  if(o.lang==='both'){des.title=thoughtFor('ta',ds);des.lines=thoughtFor('en',ds);des.footer=CL_L.ta+'\n'+CL_L.en;}else{des.title=thoughtFor(lc0,ds);des.footer=CL_L[lc0];}return des;}
+ PX.thoughtText=()=>{const ds=iso(new Date());return PX.dt.lang==='both'?devMsg('ta',tx('Devotees'),ds).text+'\n\n'+devMsg('en','Devotees',ds).text:devMsg(PX.dt.lang==='en'?'en':'ta',PX.dt.lang==='en'?'Devotees':tx('Devotees'),ds).text;};
+ PX.pictureFlow=async function(p){PX.pf={p,file:null,url:'',err:''};modal(tx(p.title),`<div id="pxPf"></div>`,null,{bottom:true,noSave:true});await pfMake();};
+ async function pfMake(){const box=$q('#pxPf');if(!box)return;box.innerHTML=`<p class="mut"><span class="spin"></span>${E(tx('Making the picture…'))}</p>`;
+  try{if(PX.pf.url)URL.revokeObjectURL(PX.pf.url);PX.pf.file=await PX.pf.p.make();PX.pf.url=URL.createObjectURL(PX.pf.file);PX.pf.err='';}catch(e){PX.pf.err=(e&&e.message)||String(e);PX.errs.push('picture: '+(e&&e.stack||e));}pfShow();}
+ function pfShow(){const box=$q('#pxPf'),f=PX.pf&&PX.pf.file;if(!box)return;const o=PX.dt,chip=(act,k,cur,lbl)=>`<button type="button" class="chip${cur===k?' on':''}" data-act="${act}" data-k="${k}">${E(tx(lbl))}</button>`;
+  const opts=PX.pf.p.options?`<label>${E(tx('Language'))}</label><div class="chips">${chip('pxDtLang','ta',o.lang,'தமிழ்')}${chip('pxDtLang','en',o.lang,'English')}${chip('pxDtLang','both',o.lang,'Both')}</div><label>${E(tx('Colours'))}</label><div class="swrow" style="margin:4px 0 8px">${THN.map((n,i)=>`<button type="button" class="swb${o.th===i?' on':''}" data-act="pxDtTh" data-k="${i}" aria-label="${n}" style="background:linear-gradient(135deg,${['#8c2410','#b45309','#14532d','#1e3a8a','#f7d9a3','#1c1b3a'][i]} 50%,#e8a317 50%)"></button>`).join('')}</div><label>${E(tx('Shape'))}</label><div class="chips">${chip('pxDtSz','sq',o.size,'Square')}${chip('pxDtSz','pt',o.size,'Portrait')}${chip('pxDtSz','st',o.size,'Status')}</div>`:'';
+  box.innerHTML=f?`<img class="pxprev" src="${PX.pf.url}" alt="">${opts}<div class="bar" style="margin-top:8px"><button type="button" class="btn pri" data-act="pxPfShare" style="flex:1">${ico('share','sm')} ${E(tx('Share now'))}</button><button type="button" class="btn" data-act="pxPfSave">${ico('down','sm')} ${E(tx('Save to phone'))}</button><button type="button" class="btn" data-act="pxPfCopy">📋</button></div>`
+   :`<div class="warn"><b>${E(tx('The picture could not be made.'))}</b><div class="mut" style="margin-top:4px;word-break:break-word">${E(PX.pf.err)}</div></div>${opts}<div class="bar"><button type="button" class="btn" data-act="pxPfRetry">${E(tx('Try again'))}</button><button type="button" class="btn" data-act="pxPfCopy">${E(tx('Copy the text instead'))}</button></div>`;}
+ A.pxPfShare=async()=>{const pf=PX.pf;if(!pf||!pf.file)return;const txt=pf.p.text();const r=await PX.share({files:[pf.file],text:txt,title:pf.p.title});if(r==='shared')closeModal();};
+ A.pxPfSave=()=>{if(PX.pf&&PX.pf.file){dlFile(PX.pf.file);toast(tx('Saved to your phone'));}};
+ A.pxPfCopy=async()=>{toast((await copyTxt(PX.pf?PX.pf.p.text():''))?tx('Copied'):tx('Could not copy'));};
+ A.pxPfRetry=()=>pfMake();
+ A.pxDtLang=d=>{PX.dt.lang=d.k;pfMake();};A.pxDtTh=d=>{PX.dt.th=+d.k;pfMake();};A.pxDtSz=d=>{PX.dt.size=d.k;pfMake();};
+ A.dvShare=()=>PX.pictureFlow({title:'Daily thought',options:true,make:async()=>bannerFile(thoughtDesign(),{}),text:PX.thoughtText});
+ addDict([['Daily thought','தினசரி சிந்தனை'],['Making the picture…','படம் தயாராகிறது…'],['The picture could not be made.','படத்தை உருவாக்க முடியவில்லை.'],['Try again','மீண்டும் முயல்'],['Copy the text instead','உரையை நகலெடு'],['Colours','நிறங்கள்'],['Shape','வடிவம்'],['Square','சதுரம்'],['Portrait','நீளம்'],['Status','ஸ்டேட்டஸ்'],['Both','இரண்டும்']]);});
+PX._p1=true;
+
+/* ---------- banner layout v2: header · body · QR · footer are stacked and measured, never drawn on top of each other ---------- */
+hook('Banner layout (QR-safe)',['renderBanner','BN_SIZES','bnPal','bnFillStr','fitText','wrapLines','rrect','bnLogoImg','bnQrText','QR','BN_FONT','thGold','loadImg','db'],()=>{
+ const QCAP={wa:['Scan to chat on WhatsApp','WhatsApp-ல் பேச ஸ்கேன் செய்யவும்'],channel:['Scan to follow us','பின்தொடர ஸ்கேன் செய்யவும்'],text:['Scan for details','விவரங்களுக்கு ஸ்கேன் செய்யவும்']};
+ const STEPS=[[1,0],[.92,0],[.84,0],[.76,0],[.68,0],[.6,0],[.6,3],[.5,3],[.5,1],[.42,1],[.42,2],[.42,3,true]];
+ async function renderV2(d,vars,cv,scale){
+  const dim=BN_SIZES[d.size]||BN_SIZES.sq,W=dim[0],H=dim[1],pal=bnPal()[d.th]||bnPal()[0],tc=pal[3],ac=pal[4];scale=scale||1;
+  cv.width=Math.round(W*scale);cv.height=Math.round(H*scale);
+  const x=cv.getContext('2d');x.save();x.scale(scale,scale);x.textBaseline='top';x.textAlign='center';
+  const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,pal[1]);g.addColorStop(1,pal[2]);x.fillStyle=g;x.fillRect(0,0,W,H);
+  if(d.photo){try{const im=await loadImg(d.photo),k=Math.max(W/im.width,H/im.height),w=im.width*k,h=im.height*k;x.drawImage(im,(W-w)/2,(H-h)/2,w,h);x.fillStyle='rgba(0,0,0,'+Math.max(0,Math.min(.85,d.dim))+')';x.fillRect(0,0,W,H);}catch(e){}}
+  else{x.globalAlpha=.07;x.fillStyle=tc;for(let i=0;i<7;i++){x.beginPath();x.arc(W*(.1+.14*i),H*(i%2?.12:.9),W*.18,0,7);x.fill();}x.globalAlpha=1;}
+  if(d.frame){x.strokeStyle=ac;x.lineWidth=6;rrect(x,26,26,W-52,H-52,30);x.stroke();x.lineWidth=2;rrect(x,44,44,W-88,H-88,22);x.stroke();}
+  const P=Math.round(W*.09),cx=W/2,maxW=W-2*P,tsz=d.tsz||1,tl=(d.tl==='ta'&&db.settings.templeNameTa)?'ta':'en';
+  const qrTxt=d.qr?bnQrText(d):'',hasQr=!!qrTxt,pos=hasQr?(d.qrPos||'bottom'):'',side=pos==='left'||pos==='right';
+  const T={title:bnFillStr(d.title,vars),sub:bnFillStr(d.sub,vars),lines:bnFillStr(d.lines,vars),foot:bnFillStr(d.footer,vars)};
+  const nmTxt=tl==='ta'?db.settings.templeNameTa:db.settings.templeName,capTxt=hasQr&&d.qrCap!==false?(QCAP[d.qr]||QCAP.text)[tl==='ta'?1:0]:'';
+  function plan(k,drop,tight){
+   const R={};let y=P;
+   const lr=d.logo?Math.round(W*.065*Math.min(1,.55+k*.45)*(tight?.7:1)):0;R.logo=lr?{x:cx-lr-6,y,w:2*lr+12,h:2*lr+12,r:lr}:null;if(lr)y+=2*lr+12+16;
+   R.name=null;if(d.temple&&drop<3&&nmTxt){const f=fitText(x,nmTxt,maxW,Infinity,Math.max(20,W*.034*Math.min(1,.6+k*.4)),18,'700',1.3);R.name={f,x:cx-maxW/2,y,w:maxW,h:f.h};y+=f.h+14;}
+   const headerBottom=y;
+   let qs=0,ps=0,capF=null,qbH=0,qbW=0;
+   if(hasQr){qs=Math.max(tight?130:150,Math.min(Math.round(W*(side?.17:.2)*(tight?.7:1)),Math.round(W*.26)));ps=qs+28;qbW=side?ps+24:Math.min(maxW,ps+160);capF=capTxt?fitText(x,capTxt,qbW,Infinity,Math.max(18,W*.026),16,'600',1.25):{h:0,lines:[],sz:0};qbH=ps+(capF.h?capF.h+10:0);}
+   const ftW=side?maxW-70-qbW-20:maxW-70,ft=T.foot?fitText(x,T.foot,Math.max(120,ftW),Infinity,Math.max(22,W*.042*tsz*Math.min(1,.6+k*.4)),20,'600',1.35):null;if(ft&&tight&&ft.lines.length>2){ft.lines=ft.lines.slice(0,2);ft.lines[1]=ft.lines[1].replace(/\s*\S{0,3}$/,'')+'…';ft.h=2*ft.sz*ft.lh;}const ftBoxH=ft?ft.h+44:0;
+   let rowTop,qrTop=0,bodyBottom;
+   if(!hasQr||!side){const fh=ftBoxH;rowTop=H-P-fh;R.footer=fh?{f:ft,x:cx-maxW/2,y:rowTop,w:maxW,h:fh}:null;
+    if(hasQr){qrTop=(fh?rowTop-18:H-P)-qbH;R.qr={x:cx-qbW/2,y:qrTop,w:qbW,h:qbH,ps,qs,capF};bodyBottom=qrTop-20;}else bodyBottom=(fh?rowTop:H-P)-20;}
+   else{const rowH=Math.max(ftBoxH,qbH);rowTop=H-P-rowH;const qx=pos==='right'?cx+maxW/2-qbW:cx-maxW/2,tx0=pos==='right'?cx-maxW/2:cx-maxW/2+qbW+20;
+    R.qr={x:qx,y:rowTop+(rowH-qbH)/2,w:qbW,h:qbH,ps,qs,capF};R.footer=ft?{f:ft,x:tx0,y:rowTop,w:maxW-qbW-20,h:rowH}:null;bodyBottom=rowTop-20;}
+   const bodyTop=headerBottom+10,bodyH=bodyBottom-bodyTop;
+   const bf=(txt,base,min,w,lh)=>txt?fitText(x,txt,maxW,Infinity,Math.max(min,base*k),min,w,lh):null;
+   let ti=bf(T.title,W*.12*tsz,34,'800',1.18),su=drop<2?bf(T.sub,W*.056*tsz,24,'600',1.25):null,li=drop<1?bf(T.lines,W*.046*tsz,22,'500',1.4):null;
+   const parts=[ti,su,li].filter(Boolean),rule=ti&&(su||li)?30:0,total=parts.reduce((s,b)=>s+b.h,0)+Math.max(0,parts.length-1)*18+rule;
+   return{R,bodyTop,bodyBottom,bodyH,ti,su,li,total,rule,fits:total<=bodyH+.5,k,drop,P};}
+  let best=null;for(const [k,dr,tg] of STEPS){const p=plan(k,dr,tg);best=p;if(p.fits)break;}
+  if(!best.fits&&best.ti){const f=best.ti,maxL=Math.max(1,Math.floor((best.bodyH-best.rule)/(f.sz*f.lh)));if(f.lines.length>maxL){f.lines=f.lines.slice(0,maxL);f.lines[maxL-1]=f.lines[maxL-1].replace(/\s*\S{0,3}$/,'')+'…';f.h=f.lines.length*f.sz*f.lh;}best.su=null;best.li=null;best.total=f.h;best.rule=0;}
+  const B=best,R=B.R,rects={};
+  /* header */
+  if(R.logo){const l=R.logo;x.save();x.shadowColor='transparent';x.beginPath();x.arc(cx,l.y+l.h/2,l.r+6,0,7);x.fillStyle=ac;x.fill();x.beginPath();x.arc(cx,l.y+l.h/2,l.r,0,7);x.clip();x.fillStyle='#fff';x.fillRect(cx-l.r,l.y+6,2*l.r,2*l.r);try{x.drawImage(await bnLogoImg(),cx-l.r,l.y+6,2*l.r,2*l.r);}catch(e){}x.restore();rects.logo={x:l.x,y:l.y,w:l.w,h:l.h};}
+  if(R.name){const n=R.name;x.fillStyle=tc;x.font=`700 ${n.f.sz}px ${BN_FONT}`;n.f.lines.forEach((ln,i)=>x.fillText(ln,cx,n.y+i*n.f.sz*1.3));rects.name={x:n.x,y:n.y,w:n.w,h:n.h};}
+  /* body, centred in its own free space */
+  const sh=!!d.photo;if(sh){x.shadowColor='rgba(0,0,0,.55)';x.shadowBlur=10;}
+  let by=B.bodyTop+Math.max(0,(B.bodyH-B.total)/2);const put=(b,col,key)=>{if(!b)return;x.font=`${b.weight} ${b.sz}px ${BN_FONT}`;x.fillStyle=col;b.lines.forEach((ln,i)=>x.fillText(ln,cx,by+i*b.sz*b.lh));rects[key]={x:cx-maxW/2,y:by,w:maxW,h:b.h};by+=b.h;};
+  put(B.ti,tc,'title');if(B.ti&&(B.su||B.li)){x.save();x.shadowColor='transparent';x.strokeStyle=ac;x.lineWidth=4;x.beginPath();x.moveTo(cx-90,by+12);x.lineTo(cx+90,by+12);x.stroke();x.restore();by+=30;}
+  if(B.su){by+=0;put(B.su,d.th===4?ac:'#fff3c4','sub');if(B.li)by+=18;}else if(B.ti&&B.li)by+=0;
+  put(B.li,tc,'lines');x.shadowColor='transparent';x.shadowBlur=0;
+  /* QR on its own white plate + label, inside its reserved slot */
+  if(R.qr){const q=R.qr,px0=q.x+(q.w-q.ps)/2;x.save();x.shadowColor='transparent';x.fillStyle='#fff';rrect(x,px0,q.y,q.ps,q.ps,18);x.fill();try{QR.draw(x,qrTxt,px0+14,q.y+14,q.qs,{margin:1});}catch(e){}x.restore();
+   if(q.capF&&q.capF.h){x.fillStyle=tc;x.font=`600 ${q.capF.sz}px ${BN_FONT}`;q.capF.lines.forEach((ln,i)=>x.fillText(ln,q.x+q.w/2,q.y+q.ps+10+i*q.capF.sz*1.25));}
+   rects.qr={x:q.x,y:q.y,w:q.w,h:q.h};rects.qrPlate={x:px0,y:q.y,w:q.ps,h:q.ps,qs:q.qs};}
+  /* footer */
+  if(R.footer){const f=R.footer;x.save();x.shadowColor='transparent';x.fillStyle=d.th===4?'rgba(140,36,16,.12)':'rgba(0,0,0,.30)';rrect(x,f.x,f.y,f.w,f.h,26);x.fill();x.restore();
+   if(f.f){x.font=`${f.f.weight} ${f.f.sz}px ${BN_FONT}`;x.fillStyle=tc;const th=f.f.lines.length*f.f.sz*f.f.lh,y0=f.y+(f.h-th)/2;f.f.lines.forEach((ln,i)=>x.fillText(ln,f.x+f.w/2,y0+i*f.f.sz*f.f.lh));}
+   rects.footer={x:f.x,y:f.y,w:f.w,h:f.h};}
+  x.restore();cv.__rects=rects;cv.__dim=[W,H];cv.__plan={k:B.k,drop:B.drop,fits:B.fits};
+  if(cv.id==='bnCv'){const w=document.getElementById('pxBnWarn');if(w){const m=B.drop>=2?'Some lines were left out so everything fits. Shorten the text or choose the Portrait / Status shape.':B.drop===1?'The “More lines” text was left out so everything fits. Shorten the text or choose a taller shape.':B.drop===3?'The temple name was left out to make room.':'';w.style.display=m?'block':'none';w.textContent=m?tx(m):'';}}PX.lastBanner={rects,W,H,k:B.k,drop:B.drop,fits:B.fits};return cv;}
+ setG('renderBanner',renderV2);PX.renderBanner=renderV2;
+ /* banner screen: QR position + label switch, and "send to Create & share" */
+ if(have('VIEWS')&&VIEWS.banner){const _vb=VIEWS.banner;VIEWS.banner=()=>{let h=_vb();if(!h||!S.bn)return h;const d=S.bn;h=h.replace('</canvas>','</canvas><div id="pxBnWarn" class="warn" style="display:none;margin-top:6px"></div>');
+  const i=h.indexOf('data-bnsel="qr"');if(i>=0&&d.qr){const j=h.indexOf('</select>',i);if(j>0){const pos=d.qrPos||'bottom';
+   const ui=`<label style="margin-top:8px">${E(tx('QR position'))}</label><div class="chips">${[['bottom','Bottom centre'],['right','Bottom right'],['left','Bottom left']].map(a=>`<button type="button" class="chip${pos===a[0]?' on':''}" data-act="pxQp" data-k="${a[0]}">${E(tx(a[1]))}</button>`).join('')}</div><label class="chk" style="padding:6px 0"><input type="checkbox" data-pxqcap ${d.qrCap===false?'':'checked'}> ${E(tx('Show the “Scan to chat” label'))}</label>`;h=h.slice(0,j+9)+ui+h.slice(j+9);}}
+  const k=h.indexOf('data-act="bnUse"');if(k>=0&&have('go')){const e=h.indexOf('</button>',k);if(e>0)h=h.slice(0,e+9)+`<button type="button" class="btn" data-act="pxBnStudio">${E(tx('Create & share'))}</button>`+h.slice(e+9);}
+  return h;};
+  A.pxQp=d=>{if(S.bn){S.bn.qrPos=d.k;render();}};
+  document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&'pxqcap' in t.dataset&&S.bn){S.bn.qrCap=t.checked;render();}});
+  A.pxBnStudio=async()=>{try{const f=await bannerFile(JSON.parse(JSON.stringify(S.bn)),{});PX.setMedia&&PX.setMedia(f,'photo');go('social');}catch(e){toast(e.message);}};}
+ addDict([['Some lines were left out so everything fits. Shorten the text or choose the Portrait / Status shape.','எல்லாம் பொருந்துவதற்காக சில வரிகள் விடப்பட்டன. உரையைச் சுருக்கவும் அல்லது நீள/ஸ்டேட்டஸ் வடிவத்தைத் தேர்வு செய்யவும்.'],['QR position','QR நிலை'],['Bottom centre','கீழ் நடுவில்'],['Bottom right','கீழ் வலது'],['Bottom left','கீழ் இடது'],['Show the “Scan to chat” label','“பேச ஸ்கேன் செய்க” குறிப்பைக் காட்டு'],['Create & share','உருவாக்கு & பகிர்']]);});
+
+/* ---------- gallery: choose where photos live, smaller Drive copies, local originals, cache clean-up ---------- */
+hook('Gallery: local copy & space saver',['GAL','GAS','kvGet','kvSet','galUpload','imgToCanvas','scaled','pickFiles','DEV','touch','render','VIEWS','A','S','modal','closeModal','toast'],()=>{
+ const LKEY='gal:index';PX.cacheLimit=120*1048576;
+ const QOPT=[[1600,.82,'Standard',' (1600 px)'],[1000,.74,'Space saver',' (1000 px) — recommended'],[700,.7,'Tiny',' (700 px)']];
+ const gopt=()=>Object.assign({loc:false,q:1,keep:false},DEV.get().galopt||{});
+ const loadLocal=async()=>{let a=[];try{a=JSON.parse(await kvGet(LKEY)||'[]');}catch(e){}a.forEach(i=>{i.loc=true;});return a;};
+ /* --- download cache (LRU) --- */
+ PX.cacheBytes=0;
+ const cidx=async()=>{try{return JSON.parse(await kvGet('gc:idx')||'{}');}catch(e){return{};}};
+ PX.cacheRefresh=async()=>{const ix=await cidx();PX.cacheBytes=Object.values(ix).reduce((s,x)=>s+(x.sz||0),0);return PX.cacheBytes;};
+ PX.cachePut=async(id,u)=>{await kvSet('gc:'+id,u);const ix=await cidx();ix[id]={t:Date.now(),sz:u.length};let tot=Object.values(ix).reduce((s,x)=>s+x.sz,0);
+  if(tot>PX.cacheLimit){const ids=Object.keys(ix).sort((a,b)=>ix[a].t-ix[b].t);for(const k of ids){if(tot<=PX.cacheLimit*.8||k===id)break;tot-=ix[k].sz;delete ix[k];await kvSet('gc:'+k,null);}}
+  await kvSet('gc:idx',JSON.stringify(ix));PX.cacheBytes=Object.values(ix).reduce((s,x)=>s+x.sz,0);};
+ PX.cacheTouch=async id=>{const ix=await cidx();if(ix[id]){ix[id].t=Date.now();await kvSet('gc:idx',JSON.stringify(ix));}};
+ PX.cacheDrop=async id=>{const ix=await cidx();if(ix[id]){delete ix[id];await kvSet('gc:idx',JSON.stringify(ix));}await kvSet('gc:'+id,null);};
+ PX.cacheClear=async()=>{const ix=await cidx();for(const id of Object.keys(ix))await kvSet('gc:'+id,null);await kvSet('gc:idx','{}');for(const k of [...GAL.th.keys()]){const it=GAL.items.find(x=>x.id===k);if(it&&!it.loc){await kvSet('gt:'+k,null);}}GAL.full.clear();PX.cacheBytes=0;};
+ /* --- the store: Drive items + this-phone items --- */
+ GAL.index=async function(){this.loading=true;try{let drv=[];this.err='';if(GAS.on()){try{drv=(await GAS.call('gal_index')).items||[];}catch(e){this.err=e.message;}}const loc=await loadLocal();this.items=[...drv,...loc].sort((a,b)=>(b.t||0)-(a.t||0));this.loaded=true;PX.cacheRefresh();}finally{this.loading=false;}};
+ GAL.saveLocal=async function(){await kvSet(LKEY,JSON.stringify(this.items.filter(i=>i.loc)));};
+ GAL.thumbs=async function(ids){const need=ids.filter(id=>!this.th.has(id));if(!need.length)return;const drv=[];
+  for(const id of need){const it=this.items.find(x=>x.id===id);if(!it||it.k==='vid')continue;
+   if(it.loc){const u=await kvGet('gl:'+id+':t');if(u)this.th.set(id,u);continue;}
+   let c=null;try{c=await kvGet('gt:'+id);}catch(e){}if(c)this.th.set(id,c);else drv.push(id);}
+  for(let i=0;i<drv.length;i+=12){const part=drv.slice(i,i+12);try{const j=await GAS.call('gal_img',{ids:part,k:'t'});for(const id of part){const b=j.imgs&&j.imgs[id];if(b){const u='data:image/jpeg;base64,'+b;this.th.set(id,u);kvSet('gt:'+id,u);}}}catch(e){this.err=e.message;}}};
+ GAL.getFull=async function(id){if(this.full.has(id))return this.full.get(id);const it=this.items.find(x=>x.id===id)||{};let u=await kvGet('gl:'+id+':f');
+  if(!u&&!it.loc){u=await kvGet('gc:'+id);if(u)PX.cacheTouch(id);}
+  if(!u&&!it.loc){const j=await GAS.call('gal_img',{ids:[id],k:'f'});if(j.imgs&&j.imgs[id]){u='data:image/jpeg;base64,'+j.imgs[id];await PX.cachePut(id,u);}}
+  if(u){this.full.set(id,u);if(this.full.size>10)this.full.delete(this.full.keys().next().value);}return u;};
+ GAL.put=async function(rec,fullUrl,thumbUrl,opt){opt=opt||{};const toLocal=!!(opt.local||rec.loc||!GAS.on());
+  if(!toLocal){const j=await GAS.call('gal_put',Object.assign({},rec,{full:fullUrl&&fullUrl.split(',')[1],thumb:thumbUrl&&thumbUrl.split(',')[1]}));const it=j.item;this.items.unshift(it);if(thumbUrl){this.th.set(it.id,thumbUrl);kvSet('gt:'+it.id,thumbUrl);}if(opt.keepOrig&&opt.orig)await kvSet('gl:'+it.id+':f',opt.orig);return it;}
+  const it=Object.assign({id:'L'+uid(),t:Date.now(),k:rec.k||'img'},rec,{loc:true});delete it.full;if(fullUrl){await kvSet('gl:'+it.id+':f',fullUrl);await kvSet('gl:'+it.id+':t',thumbUrl);this.th.set(it.id,thumbUrl);}this.items.unshift(it);await this.saveLocal();return it;};
+ GAL.edit=async function(id,patch){const it=this.items.find(x=>x.id===id);if(!it)return;if(it.loc){Object.assign(it,patch);await this.saveLocal();}else{const j=await GAS.call('gal_edit',Object.assign({id},patch));const i=this.items.findIndex(x=>x.id===id);if(i>=0)this.items[i]=j.item;}};
+ GAL.del=async function(id){const it=this.items.find(x=>x.id===id);if(!it)return;if(it.loc){await kvSet('gl:'+id+':f',null);await kvSet('gl:'+id+':t',null);}else{await GAS.call('gal_del',{id});await kvSet('gl:'+id+':f',null);kvSet('gt:'+id,null);PX.cacheDrop(id);}
+  this.items=this.items.filter(x=>x.id!==id);this.th.delete(id);this.full.delete(id);await this.saveLocal();};
+ GAL.toPhone=async function(id){const it=this.items.find(x=>x.id===id);if(!it||it.loc||it.k==='vid')throw new Error(tx('Only Drive photos can be moved.'));const full=await this.getFull(id);await this.thumbs([id]);const th=this.th.get(id);if(!full||!th)throw new Error(tx('Could not read the photo from Drive.'));
+  const nid='L'+uid(),li={id:nid,t:it.t,k:'img',n:it.n,al:it.al,cp:it.cp,by:it.by,w:it.w,h:it.h,loc:true};await kvSet('gl:'+nid+':f',full);await kvSet('gl:'+nid+':t',th);this.items.push(li);await this.saveLocal();
+  try{await GAS.call('gal_del',{id});}catch(e){throw new Error(tx('Saved on this phone, but Drive could not delete the original: ')+e.message);}
+  this.items=this.items.filter(x=>x.id!==id);this.th.set(nid,th);this.th.delete(id);kvSet('gt:'+id,null);PX.cacheDrop(id);this.items.sort((a,b)=>(b.t||0)-(a.t||0));return nid;};
+ GAL.toDrive=async function(id){const it=this.items.find(x=>x.id===id);if(!it||!it.loc||it.k==='vid')throw new Error(tx('Only photos kept on this phone can be moved.'));if(!GAS.on())throw new Error(tx('Connect the central database first.'));
+  const full=await kvGet('gl:'+id+':f'),th=await kvGet('gl:'+id+':t');if(!full||!th)throw new Error(tx('This phone no longer has the photo.'));
+  const j=await GAS.call('gal_put',{k:'img',n:it.n,al:it.al,cp:it.cp,by:it.by,w:it.w,h:it.h,full:full.split(',')[1],thumb:th.split(',')[1]});
+  this.items=this.items.filter(x=>x.id!==id);await kvSet('gl:'+id+':f',null);await kvSet('gl:'+id+':t',null);this.th.delete(id);this.items.unshift(j.item);this.th.set(j.item.id,th);kvSet('gt:'+j.item.id,th);await this.saveLocal();return j.item.id;};
+ /* --- upload dialog --- */
+ function optHtml(o){return `<label>${E(tx('Keep the photos…'))}</label><div class="chips"><button type="button" class="chip${o.loc?'':' on'}" data-act="pxGo" data-k="0">☁ ${E(tx('In Google Drive (all phones)'))}</button><button type="button" class="chip${o.loc?' on':''}" data-act="pxGo" data-k="1">📱 ${E(tx('On this phone only (saves Drive space)'))}</button></div>
+  <label>${E(tx('Photo size'))}</label><div class="chips">${QOPT.map((q,i)=>`<button type="button" class="chip${o.q===i?' on':''}" data-act="pxGq" data-k="${i}">${E(tx(q[2]))}</button>`).join('')}</div><p class="mut" style="margin:0 0 6px">${E(tx(QOPT[o.q][2]))}${QOPT[o.q][3]}</p>
+  ${o.loc?'':`<label class="chk" style="padding:6px 0"><input type="checkbox" data-pxgkeep ${o.keep?'checked':''}> ${E(tx('Also keep the full-size original on this phone'))}</label>`}`;}
+ A.pxGo=d=>{const o=gopt();o.loc=d.k==='1';DEV.set({galopt:o});refresh();};A.pxGq=d=>{const o=gopt();o.q=+d.k;DEV.set({galopt:o});refresh();};
+ document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&'pxgkeep' in t.dataset){const o=gopt();o.keep=t.checked;DEV.set({galopt:o});}});
+ function refresh(){const b=$q('#pxGopt');if(b)b.innerHTML=optHtml(gopt());const c=$q('#pxGcur');}
+ A.galAdd=()=>{if(!can('write'))return;const o=gopt();const als=[...new Set([...(typeof GALB!=='undefined'?GALB:['Festival','Pooja','Annadhanam','Temple','Events','Devotees','Other']),...GAL.items.map(i=>i.al).filter(Boolean)])];
+  modal(tx('Add photos'),`<label>${E(tx('Album'))}</label><input name="al" list="galal" value="${E(GAL.album||'Festival')}" autocomplete="off"><datalist id="galal">${als.map(a=>`<option value="${E(a)}">`).join('')}</datalist><label style="margin-top:8px">${E(tx('Caption (optional)'))}</label><input name="cp" autocomplete="off"><div id="pxGopt" style="margin-top:8px">${optHtml(o)}</div>${GAS.on()?'':`<p class="mut">${E(tx('Not connected to Google Drive — photos stay on this phone.'))}</p>`}
+   <div class="bar" style="margin-top:10px"><button type="button" class="btn pri" data-act="pxGalPick" data-cam="1" style="flex:1">${ico('camera','sm')} ${E(tx('Camera'))}</button><button type="button" class="btn" data-act="pxGalPick" data-cam="0" style="flex:1">${ico('photo','sm')} ${E(tx('Choose photos'))}</button></div><div id="galProg" class="mut"></div>`,null,{noSave:true});};
+ A.galPick=A.pxGalPick=d=>{const f=$q('#mf'),al=((f&&f.elements.al&&f.elements.al.value)||'').trim()||'Other',cp=((f&&f.elements.cp&&f.elements.cp.value)||'').trim();pickFiles(d.cam!=='1',d.cam==='1',files=>PX.galUpload(files,al,cp));};
+ PX.galUpload=async function(files,al,cp){const o=gopt(),q=QOPT[o.q],local=o.loc||!GAS.on();let ok=0,bad=0,saved=0,msg='';const prog=m=>{const e=$q('#galProg');if(e)e.textContent=m;else toast(m);};
+  for(let i=0;i<files.length;i++){const f=files[i];prog(tx('Saving')+' '+(i+1)+'/'+files.length+'…');
+   try{const cv=await imgToCanvas(f,1600),full=scaled(cv,q[0],q[1]),th=scaled(cv,320,.62);if(full.length>3400000)throw new Error('too big');const orig=(!local&&o.keep)?scaled(cv,1600,.82):null;
+    await GAL.put({n:(f.name||'photo').slice(0,80),al,cp,by:S.user?S.user.username:'',w:cv.width,h:cv.height,k:'img'},full,th,{local,keepOrig:!!orig,orig});ok++;saved+=full.length;}catch(e){bad++;msg=e.message;}}
+  GAL.err=bad?(tx('Could not save')+' '+bad+': '+msg):'';touch('gallery upload',ok+' photo(s) '+(local?'(this phone)':'(Drive)'));if(S.mOpen)closeModal();render();toast(ok+' '+tx('photo(s) saved')+(local?' 📱':' ☁')+' · '+fmtSize(saved*.73)+(bad?' · '+bad+' '+tx('failed'):''));};
+ setG('galUpload',(files,al,cp)=>PX.galUpload(files,al,cp));
+ /* --- gallery screen: storage line + badges --- */
+ const _vg=VIEWS.gallery;VIEWS.gallery=()=>{let h=_vg();const loc=GAL.items.filter(i=>i.loc&&i.k!=='vid').length,drv=GAL.items.filter(i=>!i.loc&&i.k!=='vid').length;
+  const card=`<div class="card" style="padding:8px 12px"><div class="bar" style="margin:0;justify-content:space-between"><span class="mut">☁ ${drv} · 📱 ${loc} · ${E(tx('downloaded copies'))} ${fmtSize(PX.cacheBytes||0)}</span><button type="button" class="btn sm" data-act="pxGalStore">${E(tx('Storage'))}</button></div></div>`;return h.indexOf('<div class="search">')>=0?h.replace('<div class="search">',card+'<div class="search">'):card+h;};
+ if(have('galTile')){const _t=galTile;setG('galTile',function(i,idx){let h=_t(i,idx);if(i&&i.loc)h=h.replace('</button>','<span class="gloc">📱</span></button>');return h;});}
+ A.pxGalStore=async()=>{await PX.cacheRefresh();const o=gopt(),loc=GAL.items.filter(i=>i.loc&&i.k!=='vid').length,drv=GAL.items.filter(i=>!i.loc&&i.k!=='vid').length;
+  modal(tx('Gallery storage'),`<table class="kv"><tr><th>☁ Google Drive</th><td>${drv} ${E(tx('photos'))}</td></tr><tr><th>📱 ${E(tx('This phone only'))}</th><td>${loc} ${E(tx('photos'))}</td></tr><tr><th>${E(tx('Downloaded copies'))}</th><td>${fmtSize(PX.cacheBytes||0)}</td></tr></table>
+   <div class="bar" style="margin-top:8px"><button type="button" class="btn" data-act="pxCacheClear">${E(tx('Free up space on this phone'))}</button></div><p class="mut">${E(tx('Drive photos you view are kept on this phone so they open instantly and use no data. This clears those copies; the photos stay in Drive.'))}</p>
+   <h4>${E(tx('Default for new photos'))}</h4><div id="pxGopt">${optHtml(o)}</div><p class="mut">${E(tx('Google Drive’s free 15 GB is shared with Gmail and Google Photos. “Space saver” makes each photo about a third of the size. Photos kept on this phone only are not visible on other phones and are lost if this phone’s browser data is cleared.'))}</p>`,null,{noSave:true});};
+ A.pxCacheClear=async()=>{await PX.cacheClear();toast(tx('Space freed'));A.pxGalStore();};
+ /* --- viewer: move between Drive and this phone --- */
+ if(have('galShow')){const _gs=galShow;setG('galShow',async function(){const p=_gs.apply(this,arguments);setTimeout(()=>{const it=S.gv&&S.gv.list&&S.gv.list[S.gv.i],m=$q('#modal .menu');if(!it||!m||m.querySelector('[data-act=pxMove]')||it.k==='vid'||!can('write'))return;
+   m.insertAdjacentHTML('afterbegin',it.loc?(GAS.on()?`<button type="button" class="mi" data-act="pxMove" data-w="drive">${ico('cloud')}<span>${E(tx('Move to Google Drive (share with all phones)'))}</span></button>`:''):`<button type="button" class="mi" data-act="pxMove" data-w="phone">${ico('phone')}<span>${E(tx('Move to this phone only (frees Drive space)'))}</span></button>`);},30);return p;});}
+ A.pxMove=async d=>{const it=S.gv&&S.gv.list&&S.gv.list[S.gv.i];if(!it)return;if(d.w==='phone'&&!confirm(tx('Move this photo to this phone only? Other phones will no longer see it.')))return;
+  try{toast(tx('Moving…'));if(d.w==='phone')await GAL.toPhone(it.id);else await GAL.toDrive(it.id);touch('gallery move',it.n+' → '+d.w);closeModal();setTimeout(render,40);toast(tx('Moved'));}catch(e){toast(e.message);}};
+ addDict([['Keep the photos…','புகைப்படங்களை வைக்க…'],['In Google Drive (all phones)','Google Drive-ல் (எல்லா போன்களும்)'],['On this phone only (saves Drive space)','இந்த போனில் மட்டும் (Drive இடம் மிச்சம்)'],['Photo size','புகைப்பட அளவு'],['Standard','சாதாரணம்'],['Space saver','இடம் சேமிப்பு'],['Tiny','மிகச் சிறியது'],['Storage','சேமிப்பு'],['Gallery storage','படத்தொகுப்பு சேமிப்பு'],['Free up space on this phone','இந்த போனில் இடத்தை விடு'],['Space freed','இடம் விடுவிக்கப்பட்டது'],['Moved','மாற்றப்பட்டது'],['Moving…','மாற்றுகிறது…'],['downloaded copies','பதிவிறக்கிய நகல்கள்'],['Downloaded copies','பதிவிறக்கிய நகல்கள்'],['Also keep the full-size original on this phone','முழு அளவு அசலை இந்த போனிலும் வை'],['Default for new photos','புதிய படங்களுக்கான இயல்பு']]);});
+
+/* ---------- English → Tamil (and back): temple dictionary first, then an online translator. Always editable. ---------- */
+hook('Auto Tamil',['modal','DEV','toast'],()=>{
+ const G=[['skanda sashti','கந்த சஷ்டி'],['kanda sashti','கந்த சஷ்டி'],['soorasamharam','சூரசம்ஹாரம்'],['thaipusam','தைப்பூசம்'],['panguni uthiram','பங்குனி உத்திரம்'],['vaikasi visakam','வைகாசி விசாகம்'],['karthigai deepam','கார்த்திகை தீபம்'],['aadi krithigai','ஆடி கிருத்திகை'],['aadi kiruthigai','ஆடி கிருத்திகை'],['monthly krithigai','மாதாந்திர கிருத்திகை'],['krithigai','கிருத்திகை'],['tamil new year','தமிழ் புத்தாண்டு'],['sashti','சஷ்டி'],
+  ['panchamirtha abhishekam','பஞ்சாமிர்த அபிஷேகம்'],['paal abhishekam','பால் அபிஷேகம்'],['abhishekam','அபிஷேகம்'],['sahasranama archanai','சகஸ்ரநாம அர்ச்சனை'],['archanai','அர்ச்சனை'],['navagraha homam','நவக்கிரக ஹோமம்'],['ayush homam','ஆயுஷ் ஹோமம்'],['santhana prapthi homam','சந்தான பிராப்தி ஹோமம்'],['subramanya homam','சுப்பிரமணிய ஹோமம்'],['homam','ஹோமம்'],['pooja','பூஜை'],['puja','பூஜை'],['annadhanam','அன்னதானம்'],['deepa aradhana','தீப ஆராதனை'],['deeparadhanai','தீபாராதனை'],['aarthi','ஆரத்தி'],['bhajan','பஜனை'],['kavadi','காவடி'],['kalasa','கலச'],['thirukalyanam','திருக்கல்யாணம்'],['kumbabhishekam','கும்பாபிஷேகம்'],
+  ['live now','இப்போது நேரலை'],['live telecast','நேரலை ஒளிபரப்பு'],['live','நேரலை'],['telecast','ஒளிபரப்பு'],['video','வீடியோ'],['photos','புகைப்படங்கள்'],['maha','மகா'],['utsavam','உற்சவம்'],['festival','திருவிழா'],['special','சிறப்பு'],['celebration','கொண்டாட்டம்'],['notice','அறிவிப்பு'],['announcement','அறிவிப்பு'],['prayer','பிரார்த்தனை'],
+  ['all devotees are welcome','அனைத்து பக்தர்களும் வருக'],['all are welcome','அனைவரும் வருக'],['welcome','வருக'],['thank you','நன்றி'],['happy birthday','இனிய பிறந்தநாள் நல்வாழ்த்துகள்'],['happy anniversary','இனிய திருமண நாள் நல்வாழ்த்துகள்'],
+  ['vetrivel kottam','வெற்றிவேல் கோட்டம்'],['thiruninravur','திருநின்றவூர்'],['valli devasena','வள்ளி தெய்வானை'],['subramanya swamy','சுப்பிரமணிய சுவாமி'],['lord murugan','முருகப்பெருமான்'],['murugan','முருகன்'],['temple','கோயில்'],['vel','வேல்'],['om saravana bhava','ஓம் சரவண பவ'],['vetri vel muruganukku arohara','வெற்றிவேல் முருகனுக்கு அரோகரா'],['arohara','அரோகரா'],
+  ['today','இன்று'],['tomorrow','நாளை'],['morning','காலை'],['evening','மாலை'],['night','இரவு'],['sunday','ஞாயிறு'],['monday','திங்கள்'],['tuesday','செவ்வாய்'],['wednesday','புதன்'],['thursday','வியாழன்'],['friday','வெள்ளி'],['saturday','சனி'],
+  ['january','ஜனவரி'],['february','பிப்ரவரி'],['march','மார்ச்'],['april','ஏப்ரல்'],['june','ஜூன்'],['july','ஜூலை'],['august','ஆகஸ்ட்'],['september','செப்டம்பர்'],['october','அக்டோபர்'],['november','நவம்பர்'],['december','டிசம்பர்'],['and','மற்றும்']].sort((a,b)=>b[0].length-a[0].length);
+ const RX=G.map(([en,ta])=>[new RegExp('(^|[^A-Za-z])'+en.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/ /g,'\\s+')+'(?![A-Za-z])','gi'),ta,en]);
+ function gloss(s){let out=String(s),hit=0;for(const [rx,ta] of RX){out=out.replace(rx,(m,p)=>{hit++;return p+ta;});}
+  out=out.replace(/(\d{1,2}(?::\d{2})?)\s*(a\.?m\.?|p\.?m\.?)/gi,(m,t,ap)=>{hit++;const h=parseInt(t,10),pm=/^p/i.test(ap);return (pm?(h===12||h<4?'மதியம் ':'மாலை '):(h===12?'நள்ளிரவு ':'காலை '))+t;});
+  const left=out.replace(/\{[^}]*\}/g,'').replace(/https?:\/\/\S+/g,'').match(/[A-Za-z]{2,}/g)||[];return{out:out.replace(/\s{2,}/g,' ').trim(),hit,full:left.length===0&&hit>0,left};}
+ PX.gloss=gloss;
+ const cache=new Map();let used=0;try{const u=JSON.parse(localStorage.getItem('px_mm')||'{}');if(u.d===new Date().toDateString())used=u.n||0;}catch(e){}
+ const bump=n=>{used+=n;try{localStorage.setItem('px_mm',JSON.stringify({d:new Date().toDateString(),n:used}));}catch(e){}};
+ PX.mmUsed=()=>used;
+ async function onDevice(seg,from,to){if(DEV.get().devTr!==true||!('Translator' in window))return null;try{const av=await Translator.availability({sourceLanguage:from,targetLanguage:to});if(av!=='available')return null;const t=await Translator.create({sourceLanguage:from,targetLanguage:to});return await t.translate(seg);}catch(e){return null;}}
+ async function mymemory(seg,from,to){if(used>4600)throw new Error(tx('Today’s free online translation limit is almost used up. Type the Tamil yourself.'));
+  const chunks=seg.length<=440?[seg]:(seg.match(/[^.!?\n]+[.!?\n]*/g)||[seg]).reduce((a,s)=>{if(a.length&&(a[a.length-1]+s).length<=440)a[a.length-1]+=s;else a.push(s);return a;},[]);let out='';
+  for(const c of chunks){const key=from+'|'+to+'|'+c;if(cache.has(key)){out+=cache.get(key);continue;}
+   const r=await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(c)+'&langpair='+from+'|'+to);if(!r.ok)throw new Error('Translator error '+r.status);const j=await r.json();bump(c.length);
+   if(j.quotaFinished)throw new Error(tx('The free online translator is out of quota for today.'));let t=j.responseData&&j.responseData.translatedText;if(!t||/MYMEMORY WARNING|INVALID/i.test(t))throw new Error(tx('The online translator did not answer.'));
+   t=t.replace(/&#39;/g,"'").replace(/&quot;/g,'"').replace(/&amp;/g,'&');cache.set(key,t);out+=t;}return out;}
+ /* returns {text, via, note} — via: glossary | device | online | partial | error */
+ PX.tr=async function(text,from,to){text=String(text||'').trim();if(!text)return{text:'',via:'none'};from=from||'en';to=to||'ta';
+  if(from==='en'&&to==='ta'){const g=gloss(text);if(g.full)return{text:g.out,via:'glossary'};}
+  const parts=text.split(/(\{[^}]*\}|https?:\/\/\S+)/),out=[];let via='online',err='';
+  for(const p of parts){if(!p||!p.trim()||/^\{[^}]*\}$/.test(p)||/^https?:/.test(p)){out.push(p);continue;}
+   const lead=p.match(/^\s*/)[0],trail=p.match(/\s*$/)[0],core=p.trim();let t=null;
+   try{t=await onDevice(core,from,to);if(t)via='device';else t=await mymemory(core,from,to);}catch(e){err=e.message||String(e);t=null;}
+   if(t==null){if(from==='en'&&to==='ta'){const g=gloss(core);if(g.hit){t=g.out;via='partial';}}}
+   if(t==null)return{text:'',via:'error',err:err||tx('Could not translate')};out.push(lead+t+trail);}
+  return{text:out.join(''),via};};
+ const VIA={glossary:'Temple dictionary (offline)',device:'On-device translator',online:'Online translator',partial:'Partly translated — finish it by hand'};
+ const stLabel=v=>tx(VIA[v]||'')+(v==='glossary'?'':' — '+tx('please check'));
+ /* wire two fields together: type in one, the other fills (never over your own typing) */
+ PX.taWire=function(ea,eb,o){o=o||{};if(!ea||!eb||ea.dataset.pxTa)return;ea.dataset.pxTa='1';eb.dataset.pxTa='1';
+  const host=o.after||eb.closest('.vw')||eb,bar=document.createElement('div');bar.className='pxta mut';bar.innerHTML=`<span class="pxst"></span><button type="button" class="btn sm">↻ ${E(tx('Translate to Tamil'))}</button>`;host.insertAdjacentElement('afterend',bar);
+  const st=bar.querySelector('.pxst'),setSt=m=>{st.textContent=m;};let t1=0,t2=0;
+  const put=(el,v,flag)=>{PX._fill=true;el.value=v;el.dataset[flag]='1';PX._fill=false;el.dispatchEvent(new CustomEvent('pxfill',{bubbles:true}));if(o.onFill)o.onFill(el,v);};
+  async function toTa(force){const src=ea.value.trim();if(!src)return;if(!force&&eb.value.trim()&&eb.dataset.pxAuto!=='1')return;setSt('…');const r=await PX.tr(src,'en','ta');if(ea.value.trim()!==src)return;if(r.text){put(eb,r.text,'pxAuto');setSt(stLabel(r.via));}else setSt(r.err||tx('Could not translate — type it in Tamil'));}
+  async function toEn(){const src=eb.value.trim();if(!src||(ea.value.trim()&&ea.dataset.pxAutoEn!=='1'))return;setSt('…');const r=await PX.tr(src,'ta','en');if(eb.value.trim()!==src)return;if(r.text){put(ea,r.text,'pxAutoEn');setSt(tx('English filled in')+' — '+tx('please check'));}else setSt(r.err||'');}
+  ea.addEventListener('input',()=>{if(PX._fill)return;delete ea.dataset.pxAutoEn;clearTimeout(t1);t1=setTimeout(()=>toTa(false),850);});
+  eb.addEventListener('input',e=>{if(PX._fill)return;if(e.isTrusted!==false||!e.px){delete eb.dataset.pxAuto;setSt(tx('Your Tamil text'));}clearTimeout(t2);t2=setTimeout(toEn,950);});
+  bar.querySelector('button').onclick=()=>toTa(true);return{toTa,toEn};};
+ PX.taPairs=[['title','titleTa'],['name','tamil'],['cp','cpTa']];
+ PX.taAttach=function(root){if(!root||DEV.get().autoTa===false)return;PX.taPairs.forEach(([a,b])=>{const ea=root.querySelector('[name="'+a+'"]'),eb=root.querySelector('[name="'+b+'"]');if(ea&&eb)PX.taWire(ea,eb);});};
+ const _m=modal;setG('modal',function(){const f=_m.apply(this,arguments);try{PX.taAttach(document.getElementById('modal'));}catch(e){PX.errs.push('taAttach '+e.message);}return f;});
+ addDict([['Translate to Tamil','தமிழில் மொழிபெயர்'],['Your Tamil text','உங்கள் தமிழ் உரை'],['please check','சரிபார்க்கவும்'],['English filled in','ஆங்கிலம் நிரப்பப்பட்டது'],['Temple dictionary (offline)','கோயில் அகராதி (இணையம் இல்லாமல்)'],['On-device translator','போனில் உள்ள மொழிபெயர்ப்பி'],['Online translator','இணைய மொழிபெயர்ப்பி'],['Partly translated — finish it by hand','பகுதி மட்டும் மொழிபெயர்க்கப்பட்டது — மீதியை நீங்களே எழுதுங்கள்'],['Could not translate — type it in Tamil','மொழிபெயர்க்க முடியவில்லை — தமிழில் தட்டச்சு செய்யுங்கள்']]);});
+
+/* ---------- voice dictation: long posts, Tamil and English first, all six languages ---------- */
+hook('Voice dictation',['toast'],()=>{
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;PX.sr=!!SR;
+ const ORDER=[['ta','தமிழ்','ta-IN'],['en','English','en-IN'],['hi','हिन्दी','hi-IN'],['te','తెలుగు','te-IN'],['kn','ಕನ್ನಡ','kn-IN'],['ml','മലയാളം','ml-IN']];
+ const ERR={'not-allowed':'The microphone is blocked. Allow it for Chrome in Android Settings → Apps → Chrome → Permissions.','service-not-allowed':'The microphone is blocked for this app.','audio-capture':'No microphone was found.','network':'Voice typing needs an internet connection.','language-not-supported':'This phone cannot dictate in that language. Choose another language.'};
+ const CMD={en:[[/\bnew paragraph\b/gi,'\n\n'],[/\bnew line\b/gi,'\n'],[/\b(full stop|period)\b/gi,'.'],[/\bcomma\b/gi,','],[/\bquestion mark\b/gi,'?'],[/\bexclamation (mark|point)\b/gi,'!']],ta:[[/புதிய பத்தி/g,'\n\n'],[/புதிய வரி/g,'\n'],[/முற்றுப்புள்ளி/g,'.'],[/காற்புள்ளி/g,','],[/கேள்விக்குறி/g,'?'],[/ஆச்சரியக்குறி/g,'!']]};
+ const applyCmd=(t,lc)=>{(CMD[lc]||[]).forEach(([rx,v])=>{t=t.replace(rx,v);});return t.replace(/\s+([.,?!])/g,'$1').replace(/[ \t]*\n[ \t]*/g,'\n');};
+ PX.D=null;
+ PX.dictate=function(el,o){o=o||{};if(!SR){toast(tx('Voice typing needs Google Chrome or Samsung Internet on your phone.'));return;}if(PX.D)closeD(true);
+  const pref=DEV.get().pxvl,lc0=o.lang||pref||(typeof S!=='undefined'&&S.lang==='en'?'en':'ta');
+  const D=PX.D={el,o,lang:ORDER.some(x=>x[0]===lc0)?lc0:'ta',buf:'',keep:DEV.get().pxkeep!==false,listening:false,idle:0,err:'',rec:null,stopping:false};
+  const ov=document.createElement('div');ov.id='pxd';ov.className='pxsheet';document.body.appendChild(ov);try{S.vOpen=true;history.pushState({pxd:1},'');}catch(e){}
+  draw();start();};
+ function draw(){const D=PX.D,ov=document.getElementById('pxd');if(!D||!ov)return;const keep=($q('#pxdTx',ov)||{}).value;
+  ov.innerHTML=`<div class="scrim" data-pxd="x"></div><div class="box"><div class="bar" style="justify-content:space-between;margin:0 0 4px"><b>${E(tx('Speak'))}</b><button type="button" class="ib dark" data-pxd="x" aria-label="Close">${ico('close')}</button></div>
+  <div class="chips lang" style="margin:2px 0">${ORDER.map(l=>`<button type="button" class="chip${D.lang===l[0]?' on':''}" data-pxd="lang" data-l="${l[0]}">${l[1]}</button>`).join('')}</div>
+  <button type="button" class="micbig${D.listening?' on':''}" data-pxd="mic" aria-label="Microphone">${ico('mic')}</button><div class="mut" style="text-align:center;min-height:20px" id="pxdSt">${E(D.err?tx(ERR[D.err]||('Voice typing stopped ('+D.err+')')):D.listening?tx('Listening… speak now'):tx('Tap the microphone to speak'))}</div>
+  <textarea id="pxdTx" style="min-height:96px;margin-top:8px" placeholder="${E(tx('Your words appear here — you can edit them'))}">${E(keep!=null?keep:D.buf)}</textarea>
+  <label class="chk" style="padding:6px 0"><input type="checkbox" id="pxdKeep" ${D.keep?'checked':''}> ${E(tx('Keep listening until I stop (long posts)'))}</label>
+  <p class="mut" style="margin:0 0 6px">${E(tx('Say “new line”, “full stop”, “comma” (Tamil: புதிய வரி, முற்றுப்புள்ளி).'))}</p>
+  <div class="bar" style="margin:0"><button type="button" class="btn pri" data-pxd="use" style="flex:1">${E(tx('Use'))}</button><button type="button" class="btn" data-pxd="x">${E(tx('Cancel'))}</button></div></div>`;}
+ function start(){const D=PX.D;if(!D)return;try{D.rec&&D.rec.abort();}catch(e){}const r=new SR();D.rec=r;r.lang=(ORDER.find(x=>x[0]===D.lang)||ORDER[0])[2];r.interimResults=true;r.continuous=false;r.maxAlternatives=1;D.err='';D.stopping=false;let got=false;
+  r.onstart=()=>{D.listening=true;setMic();};
+  r.onresult=e=>{let fin='',itm='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)fin+=t;else itm+=t;}got=got||!!(fin||itm);
+   const ta=document.getElementById('pxdTx');const base=D.buf;if(fin){D.buf=(base?base+(/\n$/.test(base)?'':' '):'')+applyCmd(fin.trim(),D.lang);D.idle=0;}if(ta)ta.value=D.buf+(itm?(D.buf&&!/\n$/.test(D.buf)?' ':'')+itm:'');};
+  r.onerror=e=>{D.err=(e&&e.error)||'error';};
+  r.onend=()=>{D.listening=false;const fatal=D.err&&D.err!=='no-speech'&&D.err!=='aborted';if(!got)D.idle++;
+   if(PX.D===D&&!D.stopping&&D.keep&&!fatal&&D.idle<3){setTimeout(()=>{if(PX.D===D&&!D.stopping)start();},180);return;}
+   if(PX.D===D){if(D.err==='no-speech'||D.err==='aborted')D.err='';setMic();}};
+  try{r.start();}catch(e){D.err='audio-capture';setMic();}}
+ function setMic(){const D=PX.D;if(!D)return;const b=$q('#pxd .micbig'),s=document.getElementById('pxdSt');if(b)b.classList.toggle('on',D.listening);if(s)s.textContent=D.err?tx(ERR[D.err]||('Voice typing stopped ('+D.err+')')):D.listening?tx('Listening… speak now'):tx('Tap the microphone to speak');}
+ function closeD(silent){const D=PX.D;if(!D)return;D.stopping=true;try{D.rec&&D.rec.abort();}catch(e){}PX.D=null;const ov=document.getElementById('pxd');if(ov)ov.remove();try{S.vOpen=false;}catch(e){}if(!silent&&history.state&&history.state.pxd){PX._skip=true;try{history.back();}catch(e){PX._skip=false;}}}
+ window.addEventListener('popstate',()=>{if(PX._skip){PX._skip=false;return;}if(PX.D)closeD(true);});
+ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-pxd]');if(!t||!PX.D)return;const D=PX.D,a=t.dataset.pxd;
+  if(a==='x')closeD();
+  else if(a==='lang'){const ta=document.getElementById('pxdTx');if(ta)D.buf=ta.value;D.lang=t.dataset.l;DEV.set({pxvl:D.lang});D.idle=0;draw();start();}
+  else if(a==='mic'){if(D.listening){D.stopping=true;try{D.rec.stop();}catch(x){}}else{D.idle=0;start();}}
+  else if(a==='use'){D.stopping=true;try{D.rec&&D.rec.abort();}catch(x){}const txt=(document.getElementById('pxdTx')||{}).value||D.buf||'';if(!txt.trim()){toast(tx('Nothing to use yet — tap the microphone and speak.'));D.stopping=false;return;}
+   const el=D.el,cur=el.value||'';el.value=(D.o.replace||!cur.trim())?txt:cur.replace(/\s+$/,'')+(/\n$/.test(cur)?'':' ')+txt;el.dispatchEvent(new Event('input',{bubbles:true}));
+   const lang=D.lang;closeD();if(D.o.after)D.o.after(el,lang);}});
+ document.addEventListener('change',e=>{if(e.target&&e.target.id==='pxdKeep'&&PX.D){PX.D.keep=e.target.checked;DEV.set({pxkeep:PX.D.keep});}});
+ A.pxMic=d=>{const el=document.getElementById(d.t);if(el)PX.dictate(el,{lang:d.l||undefined,after:el.__after});};
+ PX.micBtn=(id,lang)=>`<button type="button" class="pxmic" data-act="pxMic" data-t="${id}"${lang?` data-l="${lang}"`:''} aria-label="${E(tx('Speak'))}">${ico('mic')}</button>`;
+ addDict([['Keep listening until I stop (long posts)','நான் நிறுத்தும் வரை கேள் (நீண்ட பதிவுகள்)'],['Say “new line”, “full stop”, “comma” (Tamil: புதிய வரி, முற்றுப்புள்ளி).','“new line”, “full stop”, “comma” என்று சொல்லலாம் (தமிழ்: புதிய வரி, முற்றுப்புள்ளி).']]);});
+
+/* ---------- Create & share: photo / video / link → caption (voice + Tamil) → send everywhere ---------- */
+hook('Create & share (studio)',['VIEWS','A','S','db','modal','closeModal','toast','go','render','can','touch','pickFiles','imgToCanvas','scaled','DEV'],()=>{
+ const sty=document.createElement('style');sty.textContent='.pxw{position:relative}.pxw textarea{padding-right:52px}.pxw .pxmic{position:absolute;right:5px;top:5px}.pxplay{display:flex;gap:10px;align-items:center}';document.head.appendChild(sty);
+ const DEFTAGS='#Murugan #VetrivelKottam #Thiruninravur #Shorts';
+ PX.st={kind:'',file:null,url:'',link:'',meta:null,en:'',ta:'',tags:true,tagText:DEFTAGS,send:'ta',aud:{all:true,subs:false,gids:[],ids:[]}};
+ const ST=()=>PX.st;
+ const revoke=()=>{try{if(ST().url)URL.revokeObjectURL(ST().url);}catch(e){}ST().url='';};
+ const waOK=v=>v&&v.alerts!==false&&(typeof okNum==='function'?okNum(v.whatsapp||v.mobile):true);
+ /* ---------- video facts: length, shape, size, format ---------- */
+ PX.vmeta=function(file){return new Promise(res=>{if(!file){res(null);return;}const v=document.createElement('video');v.preload='metadata';v.muted=true;const u=URL.createObjectURL(file);let fin=false;
+  const done=r=>{if(fin)return;fin=true;try{URL.revokeObjectURL(u);}catch(e){}res(r);};
+  v.onloadedmetadata=()=>{const w=v.videoWidth,h=v.videoHeight;if(file.pxDur&&isFinite(file.pxDur)){done({dur:file.pxDur,w,h,size:file.size,type:file.type});return;}
+   if(isFinite(v.duration)){done({dur:v.duration,w,h,size:file.size,type:file.type});return;}
+   v.ontimeupdate=()=>{if(isFinite(v.duration)){done({dur:v.duration,w,h,size:file.size,type:file.type});}};try{v.currentTime=1e7;}catch(e){done({dur:0,w,h,size:file.size,type:file.type});}};
+  v.onerror=()=>done(null);setTimeout(()=>done(null),6000);v.src=u;});};
+ PX.checks=function(m,file){const out=[];if(!m){out.push(['warn','Could not read the video details.']);return out;}
+  const sq=m.h>=m.w;
+  if(m.dur>180)out.push(['bad','Longer than 3:00 — YouTube will not treat it as a Short.']);
+  if(!sq)out.push(['bad','Wide (landscape) video — YouTube posts it as a normal video, not a Short. Film it upright, or use “Make a short clip” to crop it.']);
+  if(sq&&m.dur<=180&&m.dur>0)out.push(['ok','Ready for YouTube Shorts (upright or square, 3 minutes or less).']);
+  if(m.size>16*1048576)out.push(['warn','Over about 16 MB — WhatsApp may compress or refuse it. Use a YouTube link, or a shorter clip.']);else out.push(['ok','Small enough for WhatsApp.']);
+  if(/webm/i.test(m.type||(file&&file.type)||''))out.push(['warn','This is a WebM file. YouTube accepts it, but WhatsApp and some Instagram versions may not. The phone’s own camera app makes MP4.']);
+  return out;};
+ /* ---------- capture ---------- */
+ PX.photoFile=async f=>{const cv=await imgToCanvas(f,1600),u=scaled(cv,1600,.85),b=await(await fetch(u)).blob();return new File([b],'photo_'+Date.now()+'.jpg',{type:'image/jpeg'});};
+ PX.setMedia=async function(file,kind,link){const s=ST();revoke();s.kind=kind||'';s.file=file||null;s.link=link||'';s.meta=null;if(file){s.url=URL.createObjectURL(file);if(kind==='video'){s.meta=await PX.vmeta(file);}}if(S.view==='social')render();};
+ function pickVid(cam,cb){const i=document.createElement('input');i.type='file';i.accept='video/*';if(cam)i.setAttribute('capture','environment');i.style.display='none';document.body.appendChild(i);i.onchange=()=>{const f=i.files&&i.files[0];i.remove();if(f)cb(f);};i.click();}
+ A.pxPhoto=()=>pickFiles(false,true,async fl=>{try{await PX.setMedia(await PX.photoFile(fl[0]),'photo');}catch(e){toast(e.message);}});
+ A.pxPhotoPick=()=>pickFiles(false,false,async fl=>{try{await PX.setMedia(await PX.photoFile(fl[0]),'photo');}catch(e){toast(e.message);}});
+ A.pxVidCam=()=>pickVid(true,f=>PX.setMedia(f,'video'));
+ A.pxVidPick=()=>pickVid(false,f=>PX.setMedia(f,'video'));
+ A.pxRec=async()=>{const f=await PX.record();if(f)PX.setMedia(f,'video');};
+ A.pxClip=()=>pickVid(false,async f=>{const o=await PX.clip(f);if(o)PX.setMedia(o,'video');});
+ A.pxLinkAdd=()=>modal(tx('Video link'),`<label>${E(tx('Link (YouTube, Google Drive, Facebook…)'))} *</label><input name="u" required inputmode="url" autocapitalize="none" placeholder="https://youtu.be/…">`,f=>{const u=(f.get('u')||'').trim();if(!/^https:\/\/\S+\.\S+/.test(u))throw new Error(tx('The link must start with https://'));PX.setMedia(null,'link',u);},{ok:tx('Use')});
+ A.pxMediaX=()=>{revoke();const s=ST();s.kind='';s.file=null;s.link='';s.meta=null;render();};
+ const _gp=A.galPicked;if(_gp)A.galPicked=async function(d){if(S.gpCb==='studio'){try{const u=await GAL.getFull(d.id);closeModal();const b=await(await fetch(u)).blob();setTimeout(()=>PX.setMedia(new File([b],'gallery_'+Date.now()+'.jpg',{type:'image/jpeg'}),'photo'),40);}catch(e){toast(e.message);}return;}return _gp.apply(this,arguments);};
+ A.pxGalPickS=()=>{if(A.galPickFor)A.galPickFor({cb:'studio'});};
+ /* ---------- in-app recorder ---------- */
+ PX.record=function(){return new Promise(resolve=>{
+  if(!PX.caps.camera||!PX.caps.recorder){toast(tx('This browser cannot record video inside the app. Use “Record video (camera app)”.'));resolve(null);return;}
+  const ov=document.createElement('div');ov.id='pxrec';ov.className='pxfull';ov.innerHTML='<div class="top"></div><video playsinline></video><div class="bot"></div>';document.body.appendChild(ov);try{S.vOpen=true;history.pushState({pxr:1},'');}catch(e){}
+  const vid=ov.querySelector('video'),top=ov.querySelector('.top'),bot=ov.querySelector('.bot');
+  let stream=null,rec=null,chunks=[],facing='environment',t0=0,tick=0,maxS=+DEV.get().pxmax||60,state='live',url='',dur=0,blob=null,fin=false;
+  const types=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+  const mime=types.find(t=>{try{return MediaRecorder.isTypeSupported(t);}catch(e){return false;}})||'';
+  const stopStream=()=>{try{stream&&stream.getTracks().forEach(t=>t.stop());}catch(e){}stream=null;};
+  const draw=()=>{const sec=state==='rec'?(Date.now()-t0)/1000:0;
+   top.innerHTML=`<button type="button" class="pxcb" data-r="x">✕ ${E(tx('Close'))}</button><span class="pxtime" id="pxT">${state==='rec'?'<i class="pxrec-dot"></i>':''}${fmtDur(sec)} / ${fmtDur(maxS)}</span>${state==='live'?`<button type="button" class="pxcb" data-r="flip">⟲ ${E(tx('Flip'))}</button>`:'<span></span>'}`;
+   bot.innerHTML=state==='live'?`${[30,60,180].map(n=>`<button type="button" class="pxcb${maxS===n?' on':''}" data-r="len" data-n="${n}">${n===180?'3 min':n+' s'}</button>`).join('')}<button type="button" class="pxrb" data-r="rec" aria-label="Record"></button>${mime&&!/mp4/.test(mime)?`<div class="mut" style="color:#bbb;width:100%;text-align:center;font-size:12px">${E(tx('This phone records WebM. For WhatsApp use “Record video (camera app)”.'))}</div>`:''}`
+    :state==='rec'?`<button type="button" class="pxrb on" data-r="stop" aria-label="Stop"></button>`
+    :`<button type="button" class="pxcb" data-r="retake">↺ ${E(tx('Retake'))}</button><span class="mut" style="color:#bbb">${fmtDur(dur)} · ${PX.fmtSize(blob?blob.size:0)}</span><button type="button" class="pxcb on" data-r="use">✓ ${E(tx('Use this video'))}</button>`;};
+  const msg=m=>{bot.innerHTML=`<div style="padding:12px;text-align:center">${E(m)}</div><button type="button" class="pxcb" data-r="x">${E(tx('Close'))}</button>`;};
+  async function openCam(){stopStream();try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:720},height:{ideal:1280}},audio:true});}catch(e){msg(tx('Camera or microphone permission was refused. Allow them for Chrome in Android Settings → Apps → Chrome → Permissions.'));return false;}vid.srcObject=stream;vid.muted=true;vid.controls=false;try{await vid.play();}catch(e){}return true;}
+  function startRec(){chunks=[];try{rec=new MediaRecorder(stream,{mimeType:mime||undefined,videoBitsPerSecond:1600000,audioBitsPerSecond:96000});}catch(e){rec=new MediaRecorder(stream);}
+   rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
+   rec.onstop=()=>{clearInterval(tick);dur=(Date.now()-t0)/1000;blob=new Blob(chunks,{type:rec.mimeType||mime||'video/webm'});try{if(url)URL.revokeObjectURL(url);}catch(e){}url=URL.createObjectURL(blob);state='review';stopStream();vid.srcObject=null;vid.src=url;vid.controls=true;vid.muted=false;vid.play().catch(()=>{});draw();};
+   rec.start(1000);t0=Date.now();state='rec';tick=setInterval(()=>{const s=(Date.now()-t0)/1000,el=document.getElementById('pxT');if(el)el.innerHTML='<i class="pxrec-dot"></i>'+fmtDur(s)+' / '+fmtDur(maxS);if(s>=maxS)stopRec();},250);draw();}
+  function stopRec(){try{if(rec&&rec.state!=='inactive')rec.stop();}catch(e){}}
+  function finish(f){if(fin)return;fin=true;clearInterval(tick);try{if(rec&&rec.state!=='inactive'){rec.onstop=null;rec.stop();}}catch(e){}stopStream();window.removeEventListener('popstate',onPop);try{if(url)URL.revokeObjectURL(url);}catch(e){}ov.remove();try{S.vOpen=false;}catch(e){}if(history.state&&history.state.pxr){PX._skip=true;try{history.back();}catch(e){PX._skip=false;}}resolve(f);}
+  const onPop=()=>{if(PX._skip){PX._skip=false;return;}fin||finishNoBack(null);};
+  function finishNoBack(f){if(fin)return;fin=true;clearInterval(tick);try{if(rec&&rec.state!=='inactive'){rec.onstop=null;rec.stop();}}catch(e){}stopStream();window.removeEventListener('popstate',onPop);ov.remove();try{S.vOpen=false;}catch(e){}resolve(f);}
+  window.addEventListener('popstate',onPop);
+  ov.addEventListener('click',async e=>{const b=e.target.closest('[data-r]');if(!b)return;const a=b.dataset.r;
+   if(a==='x')finish(null);else if(a==='flip'){facing=facing==='environment'?'user':'environment';await openCam();}
+   else if(a==='len'){maxS=+b.dataset.n;DEV.set({pxmax:maxS});draw();}
+   else if(a==='rec'){if(stream)startRec();}else if(a==='stop')stopRec();
+   else if(a==='retake'){state='live';vid.removeAttribute('src');vid.controls=false;blob=null;draw();await openCam();}
+   else if(a==='use'){const ext=/mp4/.test(blob.type)?'mp4':'webm',f=new File([blob],'temple_'+Date.now()+'.'+ext,{type:(blob.type||'video/webm').split(';')[0]});f.pxDur=dur;finish(f);}});
+  draw();openCam();});};
+ /* ---------- make a short clip: cut a part of a video and (optionally) crop it upright ---------- */
+ PX.clip=function(file){return new Promise(resolve=>{
+  const ov=document.createElement('div');ov.id='pxclip';ov.className='pxfull';ov.innerHTML=`<div class="top"><button type="button" class="pxcb" data-c="x">✕ ${E(tx('Close'))}</button><b>${E(tx('Make a short clip'))}</b><span></span></div><video playsinline controls></video><div class="bot" style="flex-direction:column;align-items:stretch;gap:8px"><div id="pxcInfo" class="mut" style="color:#ccc;text-align:center">…</div></div>`;document.body.appendChild(ov);try{S.vOpen=true;history.pushState({pxr:1},'');}catch(e){}
+  const vid=ov.querySelector('video'),bot=ov.querySelector('.bot'),url=URL.createObjectURL(file);let dur=0,busy=false,fin=false,rec=null,ac=null;
+  const mime=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'].find(t=>{try{return MediaRecorder.isTypeSupported(t);}catch(e){return false;}})||'';
+  const once=(el,ev,ms)=>new Promise(r=>{let d=false;const f=()=>{if(!d){d=true;el.removeEventListener(ev,f);r();}};el.addEventListener(ev,f);setTimeout(f,ms||4000);});
+  function done(f){if(fin)return;fin=true;busy=false;try{vid.pause();}catch(e){}try{ac&&ac.close();}catch(e){}window.removeEventListener('popstate',onPop);try{URL.revokeObjectURL(url);}catch(e){}ov.remove();try{S.vOpen=false;}catch(e){}if(f&&history.state&&history.state.pxr){PX._skip=true;try{history.back();}catch(e){PX._skip=false;}}resolve(f);}
+  const onPop=()=>{if(PX._skip){PX._skip=false;return;}done(null);};window.addEventListener('popstate',onPop);
+  vid.src=url;
+  vid.onloadedmetadata=async()=>{dur=isFinite(vid.duration)?vid.duration:(file.pxDur||0);if(!dur){vid.currentTime=1e7;await once(vid,'timeupdate',2500);dur=isFinite(vid.duration)?vid.duration:0;vid.currentTime=0;}
+   const land=vid.videoWidth>vid.videoHeight,maxLen=Math.max(5,Math.min(180,Math.floor(dur)||60));
+   bot.innerHTML=`<div id="pxcInfo" class="mut" style="color:#ccc;text-align:center">${fmtDur(dur)} · ${vid.videoWidth}×${vid.videoHeight}</div><label style="color:#ddd">${E(tx('Start at'))} <b id="pxcS">0:00</b></label><input type="range" id="pxcStart" min="0" max="${Math.max(0,Math.floor(dur)-3)}" value="0" style="width:100%"><label style="color:#ddd">${E(tx('Length'))} <b id="pxcL">${fmtDur(Math.min(30,maxLen))}</b></label><input type="range" id="pxcLen" min="3" max="${maxLen}" value="${Math.min(30,maxLen)}" style="width:100%">
+    <label class="chk" style="color:#fff"><input type="checkbox" id="pxcCrop" ${land?'checked':''}> ${E(tx('Crop to upright 9:16 (for YouTube Shorts / Reels)'))}</label><div class="pxbar"><i id="pxcBar"></i></div><div class="bar" style="justify-content:center;margin:0"><button type="button" class="pxcb" data-c="peek">▶ ${E(tx('Preview'))}</button><button type="button" class="pxcb on" data-c="make">✂ ${E(tx('Make the clip'))}</button></div><div class="mut" style="color:#aaa;text-align:center;font-size:12px">${E(tx('The clip is recorded while it plays, so a 30-second clip takes 30 seconds.'))}</div>`;};
+  const g=id=>ov.querySelector('#'+id);
+  ov.addEventListener('input',e=>{if(e.target.id==='pxcStart'){const v=+e.target.value;g('pxcS').textContent=fmtDur(v);try{vid.currentTime=v;}catch(x){}const L0=g('pxcLen');L0.max=Math.max(3,Math.min(180,Math.floor(dur-v)));if(+L0.value>+L0.max)L0.value=L0.max;g('pxcL').textContent=fmtDur(+L0.value);}else if(e.target.id==='pxcLen'){g('pxcL').textContent=fmtDur(+e.target.value);}});
+  ov.addEventListener('click',async e=>{const b=e.target.closest('[data-c]');if(!b)return;const a=b.dataset.c;if(a==='x'){done(null);return;}
+   if(a==='peek'){const s=+g('pxcStart').value;vid.currentTime=s;vid.play();setTimeout(()=>vid.pause(),Math.min(6,+g('pxcLen').value)*1000);return;}
+   if(a==='make'&&!busy){busy=true;const start=+g('pxcStart').value,len=+g('pxcLen').value,crop=g('pxcCrop').checked,vw=vid.videoWidth,vh=vid.videoHeight,OW=crop?720:Math.min(vw,1280),OH=crop?1280:Math.round(OW*vh/vw);
+    const cvs=document.createElement('canvas');cvs.width=OW;cvs.height=OH;const cx=cvs.getContext('2d'),stream=cvs.captureStream(30);
+    try{ac=new (window.AudioContext||window.webkitAudioContext)();await Promise.race([ac.resume(),sleep(800)]);const src=ac.createMediaElementSource(vid),dest=ac.createMediaStreamDestination();src.connect(dest);dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));}catch(e){}
+    const chunks=[];try{rec=new MediaRecorder(stream,{mimeType:mime||undefined,videoBitsPerSecond:2000000,audioBitsPerSecond:96000});}catch(e){rec=new MediaRecorder(stream);}
+    rec.ondataavailable=ev=>{if(ev.data&&ev.data.size)chunks.push(ev.data);};
+    rec.onstop=()=>{const type=(rec.mimeType||mime||'video/webm'),blob=new Blob(chunks,{type}),f=new File([blob],'clip_'+Date.now()+'.'+(/mp4/.test(type)?'mp4':'webm'),{type:type.split(';')[0]});f.pxDur=len;done(f);};
+    vid.controls=false;vid.currentTime=start;await once(vid,'seeked',3000);rec.start(500);try{await vid.play();}catch(e){}
+    const bar=g('pxcBar'),loop=()=>{if(!busy||fin)return;if(crop){const tr=OW/OH;let sw=vw,sh=vw/tr;if(sh>vh){sh=vh;sw=vh*tr;}cx.drawImage(vid,(vw-sw)/2,(vh-sh)/2,sw,sh,0,0,OW,OH);}else cx.drawImage(vid,0,0,OW,OH);
+     const el=vid.currentTime-start;if(bar)bar.style.width=Math.min(100,el/len*100)+'%';if(el>=len||vid.ended){busy=false;try{vid.pause();}catch(x){}try{rec.stop();}catch(x){}return;}requestAnimationFrame(loop);};loop();}});
+  vid.onerror=()=>{const i=g('pxcInfo');if(i)i.textContent=tx('This phone cannot play that video here.');};});};
+ /* ---------- audience ---------- */
+ PX.audPeople=()=>{const a=ST().aud,m=new Map(),add=v=>{if(waOK(v))m.set(v.id,v);};if(a.all)db.devotees.forEach(add);if(a.subs&&typeof devSubscribers==='function')devSubscribers().forEach(add);(a.gids||[]).forEach(id=>{const g=(db.groups||[]).find(x=>x.id===id);if(g&&typeof gMembers==='function')gMembers(g).forEach(add);});(a.ids||[]).forEach(id=>add(dev(id)));return[...m.values()];};
+ PX.cap=mode=>{const s=ST(),en=(s.en||'').trim(),ta=(s.ta||'').trim();let t=s.send==='both'?[ta,en].filter(Boolean).join('\n\n'):s.send==='en'?(en||ta):(ta||en);if(mode==='social'&&s.tags&&(s.tagText||'').trim())t=(t?t+'\n\n':'')+s.tagText.trim();return t;};
+ const logP=(t,via)=>{if(typeof logPost==='function'){logPost(t,via);return;}db.posts=db.posts||[];db.posts.push({id:uid(),t:new Date().toISOString(),by:S.user?S.user.username:'',text:String(t).slice(0,300),via});touch('social post',via);};
+ /* ---------- screen ---------- */
+ const SENDL=[['ta','தமிழ்'],['en','English'],['both','Tamil + English']];
+ VIEWS.social=()=>{const s=ST(),adm=can('write'),people=PX.audPeople(),tile=(act,ic,lbl,dis)=>`<button type="button" class="pxtile" data-act="${act}"${dis?' disabled':''}>${ico(ic)}<span>${E(tx(lbl))}</span></button>`;
+  const rec=PX.caps.camera&&PX.caps.recorder,m=s.meta;
+  const prev=s.kind==='photo'&&s.url?`<img class="pxprev" src="${s.url}" alt="">`:s.kind==='video'&&s.url?`<video class="pxprev" src="${s.url}" controls playsinline></video>`:s.kind==='link'?`<div class="okbox" style="word-break:break-all">🔗 ${E(s.link)}</div>`:'';
+  const chk=s.kind==='video'?PX.checks(m,s.file).map(c=>`<div class="mut" style="margin:2px 0">${c[0]==='ok'?'✅':c[0]==='bad'?'❌':'⚠️'} ${E(tx(c[1]))}</div>`).join(''):'';
+  const info=s.kind==='video'&&m?`<div class="pxchips"><span class="tag">${fmtDur(m.dur)}</span><span class="tag">${m.w}×${m.h}</span><span class="tag">${PX.fmtSize(m.size)}</span><span class="tag">${E(((s.file.type||'').split('/')[1]||'video').toUpperCase())}</span></div>`:s.kind==='photo'&&s.file?`<div class="pxchips"><span class="tag">${PX.fmtSize(s.file.size)}</span></div>`:'';
+  const ar=typeof autoReady==='function'&&autoReady(),vidOK=s.kind==='video',lnk=s.kind==='link';
+  const grp=(db.groups||[]).map(g=>`<button type="button" class="chip${(s.aud.gids||[]).includes(g.id)?' on':''}" data-act="pxAudG" data-id="${g.id}">${E(g.name)}</button>`).join('');
+  const chs=(typeof CHT!=='undefined'?db.channels||[]:[]).map(c=>`<div class="li" data-act="chMenu" data-id="${c.id}" style="box-shadow:none;padding:6px 0;background:none;min-height:0">${typeof chIcon==='function'?chIcon(c):''}<div class="lb"><div class="t">${E(c.name||(CHT[c.type]||CHT.website)[0])}</div><div class="s">${E(c.url)}</div></div></div>`).join('');
+  return `<div class="card"><h3>${E(tx('Create'))}</h3><div class="pxtiles">${tile('pxPhoto','camera','Take photo')}${tile('pxVidCam','video','Record video (camera app)')}${tile('pxRec','video','Record in app (Shorts)',!rec)}${tile('pxPhotoPick','photo','Photo from phone')}${tile('pxVidPick','video','Video from phone')}${tile('pxGalPickS','photo','From gallery')}${tile('pxClip','video','Make a short clip')}${tile('pxLinkAdd','play','Video link')}${tile('pxBanner','camera','Make a banner')}</div></div>
+  <div class="card"><div class="bar" style="justify-content:space-between;margin:0 0 6px"><h3 style="margin:0">${E(tx('Your post'))}</h3>${s.kind?`<button type="button" class="btn sm bad" data-act="pxMediaX">${E(tx('Remove'))}</button>`:''}</div>${prev||`<p class="mut" style="margin:0 0 6px">${E(tx('Pick a photo or video above — or just write a text post.'))}</p>`}${info}${chk}
+  <label>English</label><div class="pxw"><textarea id="pxEn" style="min-height:84px" placeholder="${E(tx('Write your post…'))}">${E(s.en)}</textarea>${PX.micBtn?PX.micBtn('pxEn','en'):''}</div>
+  <label style="margin-top:8px">தமிழ் (Tamil)</label><div class="pxw" id="pxTaW"><textarea id="pxTa" style="min-height:84px" placeholder="${E(tx('Fills in automatically — edit as you like'))}">${E(s.ta)}</textarea>${PX.micBtn?PX.micBtn('pxTa','ta'):''}</div>
+  <label style="margin-top:8px">${E(tx('Send as'))}</label><div class="chips">${SENDL.map(a=>`<button type="button" class="chip${s.send===a[0]?' on':''}" data-act="pxSendAs" data-k="${a[0]}">${E(a[1])}</button>`).join('')}</div>
+  <label class="chk" style="padding:4px 0"><input type="checkbox" data-pxtags ${s.tags?'checked':''}> ${E(tx('Add hashtags for YouTube / Instagram / Facebook'))}</label>${s.tags?`<input id="pxTagT" value="${E(s.tagText)}" style="width:100%;margin-top:4px" autocapitalize="none">`:''}</div>
+  ${adm?`<div class="card"><h3>${E(tx('Send to'))}</h3><div class="chips" style="flex-wrap:wrap;overflow:visible"><button type="button" class="chip${s.aud.all?' on':''}" data-act="pxAudAll">${E(tx('All devotees'))}</button>${typeof devSubscribers==='function'?`<button type="button" class="chip${s.aud.subs?' on':''}" data-act="pxAudSubs">${E(tx('Subscribers'))} (${devSubscribers().length})</button>`:''}${grp}<button type="button" class="chip${(s.aud.ids||[]).length?' on':''}" data-act="pxAudPick">${E(tx('Pick people…'))}${(s.aud.ids||[]).length?' ('+s.aud.ids.length+')':''}</button></div><p class="mut" style="margin:0 0 8px">${people.length} ${E(tx('devotees with a WhatsApp number will receive it.'))}</p>
+  <div class="pxtiles">${tile('pxSendBc','megaphone','WhatsApp — one by one',false)}${tile('pxSendAuto','sync','WhatsApp — automatic (link or text)',!ar||(!!s.file&&!lnk))}${tile('pxSendShare','share','WhatsApp group / Status / any app')}${tile('pxSendTg','sms','Telegram channel',!(typeof tgReady==='function'&&tgReady()))}${tile('pxYt','video','YouTube Shorts',!vidOK)}${tile('pxIg','camera','Instagram')}${tile('pxFb','people','Facebook')}${tile('pxSave','photo','Save to gallery',s.kind!=='photo')}${tile('pxCopyCap','edit','Copy caption')}</div>
+  <p class="mut" style="margin:8px 0 0">${E(tx('Automatic WhatsApp can send text and links only. Photos and videos are sent one by one — WhatsApp opens with the picture ready and you tap Send. Posting straight into YouTube, Instagram or Facebook is not possible from this app: it hands the video over to their app with your caption copied.'))}</p></div>`:''}
+  ${chs?`<div class="card"><h3>${E(tx('Our channels'))}</h3>${chs}${adm&&A.chAdd?`<div class="bar" style="margin-top:6px"><button type="button" class="btn sm" data-act="chAdd">+ ${E(tx('Add channel'))}</button></div>`:''}</div>`:(adm&&A.chAdd?`<div class="card"><h3>${E(tx('Our channels'))}</h3><button type="button" class="btn sm" data-act="chAdd">+ ${E(tx('Add channel'))}</button></div>`:'')}
+  ${(db.posts||[]).length?`<h4>${E(tx('Recent posts'))}</h4>${db.posts.slice(-5).reverse().map(p=>`<div class="arow" style="padding:6px 0"><div style="flex:1;min-width:0">${E(p.text.slice(0,90))}<div class="mut">${E(new Date(p.t).toLocaleString())} · ${E(p.by)} · ${E(p.via)}</div></div></div>`).join('')}`:''}`;};
+ const _r=render;setG('render',function(){_r.apply(this,arguments);if(S.view==='social')try{PX.stBind();}catch(e){PX.errs.push('stBind '+e.message);}});
+ PX.stBind=function(){const en=$q('#pxEn'),ta=$q('#pxTa');if(!en||!ta)return;const s=ST(),sync=()=>{s.en=en.value;s.ta=ta.value;};
+  ['input','pxfill'].forEach(ev=>{en.addEventListener(ev,sync);ta.addEventListener(ev,sync);});
+  if(PX.taWire&&DEV.get().autoTa!==false)PX.taWire(en,ta,{after:$q('#pxTaW'),onFill:sync});
+  const t=$q('#pxTagT');if(t)t.addEventListener('input',()=>{s.tagText=t.value;});};
+ document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&'pxtags' in t.dataset){ST().tags=t.checked;if(S.view==='social')render();}});
+ A.pxSendAs=d=>{ST().send=d.k;render();};
+ A.pxBanner=()=>go('banner');
+ A.pxAudAll=()=>{const a=ST().aud;a.all=!a.all;render();};A.pxAudSubs=()=>{const a=ST().aud;a.subs=!a.subs;render();};
+ A.pxAudG=d=>{const a=ST().aud,i=a.gids.indexOf(d.id);if(i<0)a.gids.push(d.id);else a.gids.splice(i,1);render();};
+ A.pxAudPick=()=>{if(typeof openPicker!=='function')return;openPicker(tx('Pick people…'),ST().aud.ids,ids=>{ST().aud.ids=ids;render();});};
+ const need=()=>{const people=PX.audPeople();if(!people.length){toast(tx('Choose who to send to first.'));return null;}return people;};
+ /* ---------- sending ---------- */
+ A.pxSendBc=()=>{const s=ST(),people=need();if(!people)return;const cap=PX.cap('wa');if(!cap&&!s.file&&s.kind!=='link'){toast(tx('Write something or add a picture first.'));return;}
+  S.bc=BCNEW();S.bc.text='🙏 {name}'+(cap?'\n'+cap:'')+(s.kind==='link'?'\n'+s.link:'');S.bc.tpl='';S.bc.mode='one';S.bc.ids=people.map(v=>v.id);if(s.file){S.bc.imgFile=s.file;S.bc.imgUrl=s.url;if(isVid(s.file))S.bc.isVid=true;}
+  logP(cap||'(media)','WhatsApp one by one ('+people.length+')');go('broadcast');};
+ A.pxSendShare=async()=>{const s=ST(),cap=PX.cap('social')||'';if(!cap&&!s.file&&s.kind!=='link'){toast(tx('Write something or add a picture first.'));return;}
+  const r=await PX.share({files:s.file?[s.file]:[],text:cap+(s.kind==='link'?'\n'+s.link:''),title:tx('Create & share')});if(r==='shared')logP(cap||'(media)','share sheet');};
+ A.pxSendTg=async()=>{const s=ST(),t=PX.cap('wa')+(s.kind==='link'?'\n'+s.link:'');if(!t.trim()){toast(tx('Write something first.'));return;}try{await GAS.call('tgpost',{text:t});logP(t,'telegram');toast(tx('Posted to Telegram')+(s.file?' ('+tx('text only')+')':''));}catch(e){toast(e.code==='nocfg'?tx('Set up the Telegram channel in Auto messages first.'):e.message);}};
+ A.pxCopyCap=async()=>{toast((await copyTxt(PX.cap('social')))?tx('Caption copied'):tx('Could not copy'));};
+ A.pxSave=async()=>{const s=ST();if(s.kind!=='photo'||!s.file)return;try{const cv=await imgToCanvas(s.file,1600),o=Object.assign({loc:false,q:1,keep:false},DEV.get().galopt||{}),q=[[1600,.82],[1000,.74],[700,.7]][o.q]||[1000,.74],full=scaled(cv,q[0],q[1]),th=scaled(cv,320,.62),cp=(s.ta||s.en||'').slice(0,200);
+  await GAL.put({n:s.file.name,al:'Social',cp,by:S.user?S.user.username:'',w:cv.width,h:cv.height,k:'img'},full,th,{local:o.loc||!GAS.on()});touch('gallery upload','1 photo (create & share)');toast(tx('Saved to the gallery'));}catch(e){toast(e.message);}};
+ /* automatic WhatsApp: text or a public link, through your own script and the WhatsApp Business API */
+ A.pxSendAuto=async()=>{const s=ST();if(!(typeof autoReady==='function'&&autoReady())){toast(tx('Set up Auto messages first (More → Auto messages).'));return;}if(s.file){toast(tx('Automatic sending carries text and links only.'));return;}
+  const people=need();if(!people)return;const wa=people.filter(v=>routeFor(v).ch==='wa');if(!wa.length){toast(tx('Nobody in this list can receive WhatsApp.'));return;}const cap=PX.cap('wa'),link=s.kind==='link'?s.link:'';if(!cap&&!link){toast(tx('Write something or add a link first.'));return;}
+  if(!confirm(wa.length+' '+tx('devotees will get this on WhatsApp automatically. WhatsApp charges for template messages — check Meta’s rate card. Send now?')))return;
+  const job=uid(),items=wa.map(v=>{const one=(cap+(link?' '+link:'')).replace(/\s+/g,' ').trim().slice(0,700);return{id:'cs|'+job+'|'+v.id,to:waNum(v.whatsapp||v.mobile),dv:v.id,type:'devotional',lang:v.lang||db.settings.defLang||'en',params:[v.name,one],text:'🙏 '+v.name+'\n'+cap+(link?'\n'+link:''),name:v.name};});
+  modal(tx('Sending…'),`<p id="pxPg" class="mut">0 / ${items.length}</p><div class="pxbar"><i id="pxPgB"></i></div>`,null,{noSave:true});let sent=0,bad=0,first='';
+  const recs=new Map();items.forEach(it=>{if(typeof nfAdd==='function'){const r=nfAdd('broadcast',it.dv,job,'queued');r.ch='auto';recs.set(it.id,r);}});
+  for(let i=0;i<items.length;i+=60){const part=items.slice(i,i+60);let res=[];try{res=(await GAS.call('send',{items:part})).res||[];}catch(e){res=part.map(it=>({id:it.id,st:'failed',err:e.message}));}
+   res.forEach(x=>{const r=recs.get(x.id);if(x.st==='sent'||x.st==='dup'){sent++;if(r){r.st='sent';delete r.err;}}else{bad++;first=first||x.err||x.st;if(r){r.st=x.st==='off'||x.st==='cap'?'skipped':'failed';r.err=x.err||x.st;}}});
+   const pg=$q('#pxPg'),b=$q('#pxPgB');if(pg)pg.textContent=Math.min(items.length,i+60)+' / '+items.length;if(b)b.style.width=Math.min(100,(i+60)/items.length*100)+'%';}
+  logP((cap||link).slice(0,120),'WhatsApp automatic ('+sent+' sent, '+bad+' not sent)');closeModal();toast(sent+' '+tx('sent')+(bad?' · '+bad+' '+tx('not sent')+(first?': '+String(first).slice(0,60):''):''));render();};
+ /* hand over to YouTube / Instagram / Facebook */
+ const HO={youtube:{n:'YouTube',steps:['Choose YouTube in the next screen.','Choose “Short” (or “Video”).','Paste the caption (it is already copied), then tap Upload.'],vid:true},instagram:{n:'Instagram',steps:['Choose Instagram in the next screen.','Choose Reel, Story or Post.','Paste the caption (it is already copied).']},facebook:{n:'Facebook',steps:['Choose Facebook in the next screen.','Choose where to post.','Paste the caption if it is empty (it is already copied).']}};
+ PX.handoff=function(kind){const s=ST(),h=HO[kind];if(h.vid&&!isVid(s.file)){toast(tx('YouTube Shorts needs a video — record or choose one first.'));return;}if(!s.file&&!(PX.cap('social')||'').trim()){toast(tx('Add a photo, a video or some text first.'));return;}
+  const chk=kind==='youtube'&&s.meta?PX.checks(s.meta,s.file).map(c=>`<div class="mut" style="margin:2px 0">${c[0]==='ok'?'✅':c[0]==='bad'?'❌':'⚠️'} ${E(tx(c[1]))}</div>`).join(''):'';
+  PX.ho={kind,cap:PX.cap('social')};modal(tx('Send to')+' '+h.n,`${chk}<ol style="padding-left:20px;margin:8px 0">${h.steps.map(x=>`<li style="margin:4px 0">${E(tx(x))}</li>`).join('')}</ol><div class="okbox" style="white-space:pre-wrap;font-size:13px">${E(PX.ho.cap||'—')}</div><button type="button" class="btn pri block" data-act="pxHoGo">${E(tx('Copy caption and continue'))}</button>`,null,{bottom:true,noSave:true});};
+ A.pxHoGo=async()=>{const s=ST(),h=PX.ho;if(!h)return;await copyTxt(h.cap||'');closeModal();const r=await PX.share({files:s.file?[s.file]:[],text:h.cap,title:HO[h.kind].n});if(r==='shared')logP(h.cap||'(media)',HO[h.kind].n);};
+ A.pxYt=()=>PX.handoff('youtube');A.pxIg=()=>PX.handoff('instagram');A.pxFb=()=>PX.handoff('facebook');
+ addDict([['Create','உருவாக்கு'],['Take photo','புகைப்படம் எடு'],['Record video (camera app)','வீடியோ பதிவு (கேமரா ஆப்)'],['Record in app (Shorts)','ஆப்பிலேயே பதிவு (ஷார்ட்ஸ்)'],['Photo from phone','போனிலிருந்து படம்'],['Video from phone','போனிலிருந்து வீடியோ'],['From gallery','படத்தொகுப்பிலிருந்து'],['Make a short clip','சிறு வீடியோ துண்டு உருவாக்கு'],['Video link','வீடியோ இணைப்பு'],['Make a banner','பேனர் உருவாக்கு'],['Your post','உங்கள் பதிவு'],['Send as','அனுப்பும் மொழி'],['Send to','அனுப்பு'],['All devotees','அனைத்து பக்தர்கள்'],['Subscribers','சந்தாதாரர்கள்'],['Pick people…','நபர்களைத் தேர்வு செய்…'],['WhatsApp — one by one','WhatsApp — ஒவ்வொருவராக'],['WhatsApp — automatic (link or text)','WhatsApp — தானியங்கி (இணைப்பு/உரை)'],['WhatsApp group / Status / any app','WhatsApp குழு / ஸ்டேட்டஸ் / எந்த ஆப்'],['Telegram channel','Telegram சேனல்'],['YouTube Shorts','YouTube ஷார்ட்ஸ்'],['Save to gallery','படத்தொகுப்பில் சேமி'],['Copy caption','தலைப்பை நகலெடு'],['Write your post…','உங்கள் பதிவை எழுதுங்கள்…'],['Fills in automatically — edit as you like','தானாக நிரம்பும் — விருப்பப்படி திருத்தலாம்'],['Recent posts','சமீபத்திய பதிவுகள்'],['Our channels','எங்கள் சேனல்கள்'],['Retake','மீண்டும் எடு'],['Use this video','இந்த வீடியோவைப் பயன்படுத்து'],['Close','மூடு'],['Flip','திருப்பு'],['Preview','முன்னோட்டம்'],['Make the clip','துண்டை உருவாக்கு'],['Start at','தொடக்கம்'],['Length','நீளம்'],['Copy caption and continue','தலைப்பை நகலெடுத்துத் தொடர்'],['Caption copied','தலைப்பு நகலெடுக்கப்பட்டது'],['Sending…','அனுப்புகிறது…']]);});
+
+/* ---------- Live & videos v2 ---------- */
+hook('Live & videos v2',['VIEWS','A','S','db','modal','closeModal','toast','go','render','can','touch','ytParse','ytEmbed','ytThumb','liveNow','lvTitle','fmtTime','fd','iso','QR','GAL'],()=>{
+ const upc=()=>db.live.filter(x=>x.status==='planned'&&x.date).sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
+ const startMs=x=>new Date(x.date+'T'+(x.time||'00:00')+':00').getTime();
+ PX.liveSoon=()=>{const now=Date.now(),L0=upc().find(x=>{const d=startMs(x)-now;return d<=60*60000&&d>=-45*60000;});return L0||null;};
+ const inTxt=ms=>{if(ms<=0)return tx('starting now');const m=Math.round(ms/60000);if(m<60)return tx('in')+' '+m+' '+tx('min');const h=Math.floor(m/60);if(h>=48)return tx('in')+' '+Math.round(h/24)+' '+tx('days');return tx('in')+' '+h+' '+tx('h')+' '+(m%60)+' '+tx('min');};
+ PX.liveText=x=>{const lc=S.lang==='ta'?'ta':'en';return typeof lvText==='function'?lvText(x,lc):((x.status==='live'?'🔴 ':'📅 ')+lvTitle(x,lc)+(x.url?'\n'+x.url:''));};
+ VIEWS.live=()=>{const now=liveNow(),soon=PX.liveSoon(),up=upc(),done=db.live.filter(x=>x.status==='done').sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,6),yc=typeof ytChannel==='function'?ytChannel():null,adm=can('write'),vids=GAL.items.filter(i=>i.k==='vid').slice(0,6);
+  const emb=(src)=>`<div class="vwrap"><iframe src="${ytEmbed(src)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
+  let player='';const src=now&&now.url?ytParse(now.url):null;
+  if(src&&(src.type==='video'||src.type==='channel'))player=S.lvPlay?emb(src):`<button type="button" class="vwrap" data-act="lvPlay" style="border:0;width:100%;display:block;background:#000" aria-label="Play">${src.type==='video'?`<img src="${ytThumb(src.id)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.8">`:''}<span class="gplay" style="width:64px;height:64px;right:auto;bottom:auto;left:calc(50% - 32px);top:calc(50% - 32px)">${ico('play')}</span></button>`;
+  else if(!now&&yc)player=S.lvPlay?emb(yc.p)+`<p class="mut" style="margin:6px 0 0">${E(tx('If the temple is not live right now, the player stays empty or shows a message from YouTube.'))}</p>`:`<button type="button" class="btn pri block" data-act="lvPlay">${ico('play','sm')} ${E(tx('Watch the temple’s YouTube live'))}</button>`;
+  const tools=x=>x&&x.url?`<div class="bar" style="margin-top:8px"><button type="button" class="btn sm" data-act="pxLvCopy" data-id="${x.id}">${ico('edit','sm')} ${E(tx('Copy link'))}</button><button type="button" class="btn sm" data-act="pxLvShare" data-id="${x.id}">${ico('share','sm')} ${E(tx('Share link'))}</button><button type="button" class="btn sm" data-act="pxLvQr" data-id="${x.id}">▦ ${E(tx('QR code'))}</button><a class="btn sm" target="_blank" rel="noopener" href="${E(x.url)}">${E(tx('Open'))}</a></div>`:'';
+  const hero=now?`<div class="card" style="border:2px solid #e53935"><div class="bar" style="margin:0 0 6px"><span class="tag" style="background:#e53935;color:#fff">● ${E(tx('LIVE NOW'))}</span><b>${E(lvTitle(now,S.lang))}</b></div>${player}${tools(now)}${adm?`<div class="bar" style="margin-top:6px"><button type="button" class="btn sm pri" data-act="lvAnnounce" data-id="${now.id}">${ico('megaphone','sm')} ${E(tx('Tell devotees'))}</button><button type="button" class="btn sm bad" data-act="lvEnd" data-id="${now.id}">${E(tx('End live'))}</button></div>`:''}</div>`:`<div class="card"><h3>${E(tx('Watch'))}</h3>${player||`<p class="mut" style="margin:0">${E(tx('Add the temple’s YouTube channel link in Create & share to watch here.'))}</p>`}</div>`;
+  const soonC=soon&&!now?`<div class="card" style="border-left:4px solid var(--acc)"><div class="mut" style="font-size:12px;text-transform:uppercase">${E(tx('Starts soon'))}</div><b>${E(lvTitle(soon,S.lang))}</b><div class="pxcd" id="pxCd" data-ms="${startMs(soon)}">${E(inTxt(startMs(soon)-Date.now()))}</div>${adm?`<div class="bar" style="margin-top:8px"><button type="button" class="btn pri sm" data-act="lvAnnounce" data-id="${soon.id}">${ico('megaphone','sm')} ${E(tx('Tell devotees'))}</button><button type="button" class="btn sm" data-act="lvGo" data-id="${soon.id}">● ${E(tx('Start now'))}</button></div>`:''}</div>`:'';
+  return `${hero}${soonC}${adm?`<div class="card"><h3>${E(tx('Go live'))}</h3><div class="bar" style="margin:0 0 8px"><button type="button" class="btn pri" data-act="lvStart">● ${E(tx('Start live'))}</button><button type="button" class="btn" data-act="lvPlan">+ ${E(tx('Schedule a live'))}</button><button type="button" class="btn" data-act="pxLvCheck">✔ ${E(tx('Before you go live'))}</button></div><p class="mut" style="margin:0">${E(tx('The live video itself is made in the YouTube app (or Facebook / Instagram). Here you add its link, tell devotees, and keep the recording afterwards.'))}</p></div>
+  <div class="card"><h3>${E(tx('Videos'))}</h3><div class="bar" style="margin:0"><button type="button" class="btn pri" data-act="pxVidStudio">${ico('video','sm')} ${E(tx('Record or send a video'))}</button><button type="button" class="btn" data-act="galVid">${ico('play','sm')} ${E(tx('Add video link'))}</button></div></div>`:''}
+  ${up.length?`<h4>${E(tx('Scheduled'))}</h4>${up.map(x=>`<div class="li" data-act="lvMenu" data-id="${x.id}"><div class="dt"><b>${new Date(x.date+'T00:00:00').getDate()}</b><span>${new Date(x.date+'T00:00:00').toLocaleDateString(LOCALE[S.lang]||'en-IN',{month:'short'})}</span></div><div class="lb"><div class="t">${E(lvTitle(x,S.lang))}</div><div class="s">${x.time?E(fmtTime(x.time,S.lang))+' · ':''}${E(inTxt(startMs(x)-Date.now()))}${x.url?'':' · '+E(tx('no link yet'))}</div></div></div>`).join('')}`:''}
+  ${vids.length?`<h4>${E(tx('Saved videos'))}</h4><div class="gg">${vids.map(galTile).join('')}</div><button type="button" class="btn text block" data-act="go" data-v="gallery">${E(tx('All photos & videos'))}</button>`:''}
+  ${done.length?`<h4>${E(tx('Past lives'))}</h4>${done.map(x=>`<div class="li" data-act="lvMenu" data-id="${x.id}"><div class="dt"><b>${x.date?new Date(x.date+'T00:00:00').getDate():'—'}</b><span>${x.date?new Date(x.date+'T00:00:00').toLocaleDateString(LOCALE[S.lang]||'en-IN',{month:'short'}):''}</span></div><div class="lb"><div class="t">${E(lvTitle(x,S.lang))}</div><div class="s">${x.url?E(tx('link added')):E(tx('no link yet'))}</div></div><span class="tag">${E(tx('done'))}</span></div>`).join('')}`:''}`;};
+ const lv=id=>db.live.find(x=>x.id===id);
+ A.pxLvCopy=async d=>{const x=lv(d.id);toast((await copyTxt(x.url))?tx('Link copied'):tx('Could not copy'));};
+ A.pxLvShare=async d=>{const x=lv(d.id);await PX.share({text:PX.liveText(x),title:lvTitle(x,S.lang)});};
+ A.pxLvQr=d=>{const x=lv(d.id);let q='';try{q=QR.svg(x.url,{margin:2});}catch(e){}modal(tx('QR code'),`<div style="max-width:260px;margin:0 auto;background:#fff;padding:8px;border-radius:12px">${q}</div><p class="mut" style="text-align:center">${E(tx('Print this or show it on the notice board — devotees scan it to watch.'))}</p><div class="bar" style="justify-content:center"><button type="button" class="btn pri" data-act="pxLvQrImg" data-id="${x.id}">${ico('share','sm')} ${E(tx('Share QR picture'))}</button></div>`,null,{bottom:true,noSave:true});};
+ A.pxLvQrImg=async d=>{const x=lv(d.id),cv=document.createElement('canvas');cv.width=900;cv.height=1050;const c=cv.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,900,1050);c.fillStyle='#8c2410';c.textAlign='center';c.textBaseline='top';c.font='800 50px sans-serif';const t=fitText?fitText(c,lvTitle(x,S.lang),780,170,50,28,'800',1.25):null;if(t){c.font=`800 ${t.sz}px ${BN_FONT||'sans-serif'}`;t.lines.forEach((l,i)=>c.fillText(l,450,50+i*t.sz*1.25));}QR.draw(c,x.url,100,230,700,{margin:2});c.fillStyle='#2b1d10';c.font=`600 34px ${typeof BN_FONT!=='undefined'?BN_FONT:'sans-serif'}`;c.fillText(tx('Scan to watch the live'),450,960);
+  const b=await new Promise(r=>cv.toBlob(r,'image/jpeg',.92));await PX.share({files:[new File([b],'live_qr.jpg',{type:'image/jpeg'})],text:PX.liveText(x),title:lvTitle(x,S.lang)});};
+ A.pxLvCheck=()=>modal(tx('Before you go live'),`<ol style="padding-left:20px;margin:0">${['Charge the phone (live uses a lot of battery) or plug it in.','Use Wi-Fi or a strong signal — test by loading a YouTube video.','Hold the phone upright for a Short or sideways for a normal live. Use a stand if you can.','In the YouTube app: ＋ → Go live. Mobile live needs a channel that is allowed to stream — check the YouTube app for the current rules.','Copy the live link from YouTube’s Share button.','Come back here → Start live → paste the link → Tell devotees.','After the live: End live here, then “Keep the recording in the gallery”.'].map(x=>`<li style="margin:6px 0">${E(tx(x))}</li>`).join('')}</ol>`,null,{bottom:true,noSave:true});
+ A.pxVidStudio=()=>{PX.st.tab='video';go('social');};
+ /* countdown ticks + one reminder when the app is open */
+ setInterval(()=>{const el=document.getElementById('pxCd');if(el){const ms=(+el.dataset.ms)-Date.now();el.textContent=inTxt(ms);}
+  if(!db||!S||!S.user||!can('write'))return;const x=PX.liveSoon();PX._n=PX._n||{};if(x&&!PX._n[x.id]&&startMs(x)-Date.now()<=15*60000&&startMs(x)-Date.now()>-5*60000){PX._n[x.id]=1;toast(tx('Live starts soon:')+' '+lvTitle(x,S.lang)+' — '+inTxt(startMs(x)-Date.now()));}},30000);
+ /* Home: quick Create button + live-soon card */
+ const _d=VIEWS.dash;VIEWS.dash=()=>{let h=_d();const i=h.indexOf('data-v="broadcast"');if(i>=0){const e=h.indexOf('</button>',i);if(e>0&&h.indexOf('data-v="social"',i)<0)h=h.slice(0,e+9)+`<button type="button" class="qa" data-act="nav" data-v="social">${ico('camera')}<span>${E(tx('Create & share'))}</span></button>`+h.slice(e+9);}
+  const x=PX.liveSoon();if(x&&!liveNow()&&can('write'))h=h.replace('<div class="qa-grid">',`<div class="card" data-act="go" data-v="live" style="cursor:pointer;border-left:4px solid var(--acc)"><b>${E(lvTitle(x,S.lang))}</b> <span class="mut">${E(tx('Starts soon'))} · ${E(inTxt(startMs(x)-Date.now()))}</span></div><div class="qa-grid">`);return h;};
+ TITLES.social=tx('Create & share');try{const r=MORE.find(m=>m[0]==='social');if(r)r[2]='Create & share';}catch(e){}
+ addDict([['LIVE NOW','இப்போது நேரலை'],['Starts soon','விரைவில் தொடங்கும்'],['Start now','இப்போது தொடங்கு'],['starting now','இப்போது தொடங்குகிறது'],['in','இன்னும்'],['min','நிமி'],['h','மணி'],['days','நாட்கள்'],['Copy link','இணைப்பை நகலெடு'],['Share link','இணைப்பைப் பகிர்'],['QR code','QR குறியீடு'],['Before you go live','நேரலைக்கு முன்'],['Record or send a video','வீடியோ பதிவு செய் / அனுப்பு'],['Saved videos','சேமித்த வீடியோக்கள்'],['Share QR picture','QR படத்தைப் பகிர்'],['Scan to watch the live','நேரலை பார்க்க ஸ்கேன் செய்க'],['Live starts soon:','நேரலை விரைவில்:'],['Create & share','உருவாக்கு & பகிர்']]);});
+/* ---------- status page ---------- */
+hook('Status page',['VIEWS','TITLES','MORE','S','db'],()=>{
+ TITLES.pxstat='v9.1 status';if(!MORE.some(m=>m[0]==='pxstat'))MORE.push(['pxstat','gear','v9.1 status','a']);
+ VIEWS.pxstat=()=>{const c=PX.caps,row=(k,ok,t)=>`<tr><th>${E(k)}</th><td>${ok===null?'':ok?'✅ ':'⚠️ '}${E(t)}</td></tr>`;
+  return `<div class="card"><h3>v${E(PX.v)} ${E(tx('add-on'))}</h3><table class="kv">${PX.hooks.map(h=>row(h.name,h.ok,h.ok?tx('active'):h.msg)).join('')}</table></div>
+  <div class="card"><h3>${E(tx('This phone'))}</h3><table class="kv">${row('Share files',c.shareFiles,c.shareFiles?'yes':'no — a Save / Share-now sheet is used')}${row('Share video',c.shareVideo,c.shareVideo?'yes':'no')}${row('Camera recorder',c.camera&&c.recorder,c.camera&&c.recorder?(c.mp4rec?'MP4':'WebM'):'not available')}${row('Voice typing',c.speech,c.speech?'yes':'no — use Chrome')}${row('On-device translator',null,c.translator?'available':'not available (online translator is used)')}${row('Online translation used today',null,(PX.mmUsed?PX.mmUsed():0)+' / about 5000 characters')}${row('Gallery cache',null,PX.fmtSize(PX.cacheBytes||0))}</table>
+  <label class="chk" style="padding:8px 0"><input type="checkbox" data-pxauto ${DEV.get().autoTa===false?'':'checked'}> ${E(tx('Fill in Tamil automatically while I type English'))}</label><label class="chk" style="padding:8px 0"><input type="checkbox" data-pxdevtr ${DEV.get().devTr===true?'checked':''}> ${E(tx('Use the browser’s built-in translator when it has one (desktop Chrome only)'))}</label></div>
+  ${PX.errs.length?`<div class="card"><h3>${E(tx('Problems'))}</h3><pre style="white-space:pre-wrap;font-size:11px;max-height:220px;overflow:auto">${E(PX.errs.slice(-6).join('\n\n'))}</pre></div>`:''}`;};
+ document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&'pxauto' in t.dataset){DEV.set({autoTa:t.checked});toast(tx('Saved'));}else if(t&&t.dataset&&'pxdevtr' in t.dataset){DEV.set({devTr:t.checked});toast(tx('Saved'));}});
+ addDict([['v9.1 status','v9.1 நிலை'],['add-on','கூடுதல் வசதி'],['This phone','இந்த போன்'],['active','இயங்குகிறது'],['Problems','சிக்கல்கள்'],['Fill in Tamil automatically while I type English','ஆங்கிலம் தட்டச்சு செய்யும்போது தமிழை தானாக நிரப்பு']]);});
+})();
+
+
 </script>
 </body>
 </html>
