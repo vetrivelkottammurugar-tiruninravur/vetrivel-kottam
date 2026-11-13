@@ -3,7 +3,7 @@
    - caches the on-device OCR engine after first use
    - receives photos shared from the Gallery / Camera ("Share > Temple") and hands them to the app
    Raise V when you replace index.html so phones pick up the new version. */
-var V = 'tmgr-v9', OCR = V + '-ocr', SH = 'tmgr-share';
+var V = 'tmgr-v91', OCR = V + '-ocr', SH = 'tmgr-share';
 var SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(V).then(function (c) {
