@@ -1,5 +1,5 @@
 {
- "v": "10.0.0",
+ "v": "10.0.1",
  "html": "10.0",
  "patches": [
   {
@@ -45,6 +45,10 @@
   {
    "f": "patches/p80-bot.js",
    "v": "f43b5ab48a"
+  }
+  {
+   "f": "patches/p85-join.js",
+   "v": "217901fe55"
   }
  ],
  "disabled": [],
